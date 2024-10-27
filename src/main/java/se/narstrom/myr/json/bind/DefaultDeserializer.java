@@ -16,7 +16,6 @@ public final class DefaultDeserializer implements JsonbDeserializer<Object> {
 
 	@Override
 	public Object deserialize(final JsonParser parser, final DeserializationContext ctx, final Type type) {
-		System.out.println("Deserialize an instance of " + type.toString());
 
 		if (parser.next() != Event.START_OBJECT)
 			throw new JsonbException("Not an object");

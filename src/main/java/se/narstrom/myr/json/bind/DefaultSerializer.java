@@ -49,9 +49,6 @@ public final class DefaultSerializer implements JsonbSerializer<Object> {
 				throw new JsonbException(ex.getMessage(), ex);
 			}
 
-			System.out.println("Method property: " + method);
-			System.out.println("Property name: " + propertyName);
-
 			ctx.serialize(propertyName, value, generator);
 			writtenProperties.add(propertyName);
 		}
@@ -68,8 +65,6 @@ public final class DefaultSerializer implements JsonbSerializer<Object> {
 			} catch (final ReflectiveOperationException ex) {
 				throw new JsonbException(ex.getMessage(), ex);
 			}
-
-			System.out.println("Field property " + field);
 
 			ctx.serialize(fieldName, value, generator);
 		}
