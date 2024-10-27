@@ -1,5 +1,7 @@
 package se.narstrom.myr.json.bind;
 
+import java.util.Objects;
+
 import jakarta.json.bind.Jsonb;
 import jakarta.json.bind.JsonbBuilder;
 import jakarta.json.bind.JsonbConfig;
@@ -7,22 +9,27 @@ import jakarta.json.spi.JsonProvider;
 
 public final class MyrJsonbBuilder implements JsonbBuilder {
 
+	private JsonbConfig config;
+
+	private JsonProvider jsonp;
+
 	@Override
 	public JsonbBuilder withConfig(final JsonbConfig config) {
-		// TODO Auto-generated method stub
-		return null;
+		this.config = Objects.requireNonNull(config);
+		return this;
 	}
 
 	@Override
-	public JsonbBuilder withProvider(final JsonProvider jsonpProvider) {
-		// TODO Auto-generated method stub
-		return null;
+	public JsonbBuilder withProvider(final JsonProvider jsonp) {
+		this.jsonp = Objects.requireNonNull(jsonp);
+		return this;
 	}
 
 	@Override
 	public Jsonb build() {
-		// TODO Auto-generated method stub
-		return null;
+		if(jsonp == null)
+			jsonp = JsonProvider.provider();
+		return new MyrJsonb(config, jsonp);
 	}
 
 }

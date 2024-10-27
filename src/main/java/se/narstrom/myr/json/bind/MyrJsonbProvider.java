@@ -7,7 +7,6 @@ public final class MyrJsonbProvider extends JsonbProvider {
 
 	@Override
 	public JsonbBuilder create() {
-		// TODO Auto-generated method stub
-		return null;
+		return new MyrJsonbBuilder();
 	}
 }
