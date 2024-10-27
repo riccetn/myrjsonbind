@@ -1,6 +1,7 @@
 package se.narstrom.myr.json.bind.serializer;
 
 import java.lang.reflect.Type;
+import java.math.BigDecimal;
 
 import jakarta.json.bind.JsonbException;
 import jakarta.json.bind.serializer.DeserializationContext;
@@ -23,7 +24,7 @@ public final class FloatSerializer implements JsonbSerializer<Float>, JsonbDeser
 
 	@Override
 	public void serialize(final Float obj, final JsonGenerator generator, final SerializationContext ctx) {
-		generator.write(obj);
+		generator.write(new BigDecimal(obj.toString()));
 	}
 
 }
