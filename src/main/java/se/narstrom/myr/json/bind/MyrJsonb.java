@@ -34,12 +34,7 @@ import jakarta.json.spi.JsonProvider;
 import jakarta.json.stream.JsonGenerator;
 import jakarta.json.stream.JsonParser;
 import jakarta.json.stream.JsonParser.Event;
-import se.narstrom.myr.json.bind.serializer.CalendarSerializer;
-import se.narstrom.myr.json.bind.serializer.DateSerializer;
-import se.narstrom.myr.json.bind.serializer.DurationSerializer;
 import se.narstrom.myr.json.bind.serializer.EnumSerializer;
-import se.narstrom.myr.json.bind.serializer.JavaTimeSerializer;
-import se.narstrom.myr.json.bind.serializer.PeriodSerializer;
 import se.narstrom.myr.json.bind.serializer.TimeZoneSerializer;
 import se.narstrom.myr.json.bind.serializer.basic.BooleanSerializer;
 import se.narstrom.myr.json.bind.serializer.basic.ByteSerializer;
@@ -51,6 +46,11 @@ import se.narstrom.myr.json.bind.serializer.basic.LongSerializer;
 import se.narstrom.myr.json.bind.serializer.basic.NumberSerializer;
 import se.narstrom.myr.json.bind.serializer.basic.ShortSerializer;
 import se.narstrom.myr.json.bind.serializer.basic.StringSerializer;
+import se.narstrom.myr.json.bind.serializer.time.CalendarSerializer;
+import se.narstrom.myr.json.bind.serializer.time.DateSerializer;
+import se.narstrom.myr.json.bind.serializer.time.DurationSerializer;
+import se.narstrom.myr.json.bind.serializer.time.JavaTimeSerializer;
+import se.narstrom.myr.json.bind.serializer.time.PeriodSerializer;
 
 public final class MyrJsonb implements Jsonb, SerializationContext, DeserializationContext {
 	private final JsonbConfig config;

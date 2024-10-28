@@ -1,4 +1,4 @@
-package se.narstrom.myr.json.bind.serializer;
+package se.narstrom.myr.json.bind.serializer.time;
 
 import java.lang.reflect.Type;
 import java.time.DateTimeException;
