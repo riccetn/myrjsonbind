@@ -2,7 +2,6 @@ package se.narstrom.myr.json.bind.serializer.time;
 
 import java.lang.reflect.Type;
 import java.time.DateTimeException;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
