@@ -3,6 +3,7 @@ package se.narstrom.myr.json.bind;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -31,6 +32,9 @@ public final class DefaultSerializer implements JsonbSerializer<Object> {
 				continue;
 
 			if (method.isBridge())
+				continue;
+
+			if(Modifier.isStatic(method.getModifiers()))
 				continue;
 
 			final String methodName = method.getName();
@@ -62,6 +66,9 @@ public final class DefaultSerializer implements JsonbSerializer<Object> {
 		}
 
 		for (final Field field : obj.getClass().getFields()) {
+			if(Modifier.isStatic(field.getModifiers()))
+				continue;
+
 			final String fieldName = field.getName();
 
 			if (writtenProperties.contains(fieldName))
