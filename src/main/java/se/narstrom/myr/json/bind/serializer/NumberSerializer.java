@@ -16,7 +16,7 @@ public final class NumberSerializer implements JsonbSerializer<Number>, JsonbDes
 
 	@Override
 	public Number deserialize(final JsonParser parser, final DeserializationContext ctx, final Type type) {
-		if(parser.next() != Event.VALUE_NUMBER)
+		if(parser.currentEvent() != Event.VALUE_NUMBER)
 			throw new JsonbException("Not a number");
 		return parser.getBigDecimal();
 	}

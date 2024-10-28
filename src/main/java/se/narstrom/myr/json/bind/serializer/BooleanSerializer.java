@@ -16,7 +16,7 @@ public final class BooleanSerializer implements JsonbSerializer<Boolean>, JsonbD
 
 	@Override
 	public Boolean deserialize(final JsonParser parser, final DeserializationContext ctx, final Type rtType) {
-		return switch (parser.next()) {
+		return switch (parser.currentEvent()) {
 			case VALUE_TRUE -> Boolean.TRUE;
 			case VALUE_FALSE -> Boolean.FALSE;
 			default -> throw new JsonbException("Not a boolean");

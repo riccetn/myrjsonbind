@@ -16,7 +16,7 @@ public final class LongSerializer implements JsonbSerializer<Long>, JsonbDeseria
 
 	@Override
 	public Long deserialize(final JsonParser parser, final DeserializationContext ctx, final Type type) {
-		if (parser.next() != Event.VALUE_NUMBER)
+		if (parser.currentEvent() != Event.VALUE_NUMBER)
 			throw new JsonbException("Not a number");
 		return parser.getLong();
 	}

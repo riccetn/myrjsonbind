@@ -16,7 +16,7 @@ public final class DoubleSerializer implements JsonbSerializer<Double>, JsonbDes
 
 	@Override
 	public Double deserialize(final JsonParser parser, final DeserializationContext ctx, final Type type) {
-		if (parser.next() != Event.VALUE_NUMBER)
+		if (parser.currentEvent() != Event.VALUE_NUMBER)
 			throw new JsonbException("Not a number");
 		return parser.getBigDecimal().doubleValue();
 	}

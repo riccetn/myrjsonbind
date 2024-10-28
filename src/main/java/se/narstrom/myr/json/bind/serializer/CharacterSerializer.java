@@ -16,7 +16,7 @@ public final class CharacterSerializer implements JsonbSerializer<Character>, Js
 
 	@Override
 	public Character deserialize(final JsonParser parser, final DeserializationContext ctx, final Type type) {
-		if (parser.next() != Event.VALUE_STRING)
+		if (parser.currentEvent() != Event.VALUE_STRING)
 			throw new JsonbException("Not a string");
 		final String value = parser.getString();
 		if (value.length() != 1)

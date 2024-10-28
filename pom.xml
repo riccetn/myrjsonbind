@@ -81,6 +81,7 @@
 						<dependency>jakarta.json.bind:jakarta.json.bind-tck</dependency>
 					</dependenciesToScan>
 					<includes>
+						<include>ee.jakarta.tck.json.bind.defaultmapping.arrays.**</include>
 						<include>ee.jakarta.tck.json.bind.defaultmapping.basictypes.**</include>
 					</includes>
 				</configuration>

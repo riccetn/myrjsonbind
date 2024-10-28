@@ -20,6 +20,7 @@ import jakarta.json.bind.serializer.SerializationContext;
 import jakarta.json.spi.JsonProvider;
 import jakarta.json.stream.JsonGenerator;
 import jakarta.json.stream.JsonParser;
+import jakarta.json.stream.JsonParser.Event;
 import se.narstrom.myr.json.bind.serializer.BooleanSerializer;
 import se.narstrom.myr.json.bind.serializer.ByteSerializer;
 import se.narstrom.myr.json.bind.serializer.CharacterSerializer;
@@ -189,6 +190,10 @@ public final class MyrJsonb implements Jsonb, SerializationContext, Deserializat
 
 	@Override
 	public <T> T deserialize(final Type type, final JsonParser parser) throws JsonbException {
+		if (parser.currentEvent() == null || parser.currentEvent() == Event.KEY_NAME)
+			parser.next();
+		if (parser.currentEvent() == Event.VALUE_NULL)
+			return null;
 		Class<?> clazz = (Class<?>) type;
 		JsonbDeserializer<?> deserializer;
 		while ((deserializer = deserializers.get(clazz)) == null) {
@@ -202,12 +207,16 @@ public final class MyrJsonb implements Jsonb, SerializationContext, Deserializat
 	@Override
 	public <T> void serialize(final String key, final T object, final JsonGenerator generator) {
 		generator.writeKey(key);
-		serialize(object, generator);
+		serialize(object, object.getClass(), generator);
 	}
 
 	@Override
 	public <T> void serialize(final T object, final JsonGenerator generator) {
-		serialize(object, object.getClass(), generator);
+		if (object == null) {
+			generator.writeNull();
+		} else {
+			serialize(object, object.getClass(), generator);
+		}
 	}
 
 	private <T> void serialize(final T object, final Type type, final JsonGenerator generator) throws JsonbException {

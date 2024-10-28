@@ -1,5 +1,6 @@
 package se.narstrom.myr.json.bind;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.HashSet;
@@ -14,6 +15,13 @@ public final class DefaultSerializer implements JsonbSerializer<Object> {
 
 	@Override
 	public void serialize(final Object obj, final JsonGenerator generator, final SerializationContext ctx) {
+		final Class<?> clazz = obj.getClass();
+
+		if (clazz.isArray()) {
+			serializeArray(obj, clazz, generator, ctx);
+			return;
+		}
+
 		generator.writeStartObject();
 		final Set<String> writtenProperties = new HashSet<>();
 
@@ -22,7 +30,7 @@ public final class DefaultSerializer implements JsonbSerializer<Object> {
 			if (method.getParameterCount() != 0)
 				continue;
 
-			if(method.isBridge())
+			if (method.isBridge())
 				continue;
 
 			final String methodName = method.getName();
@@ -67,6 +75,17 @@ public final class DefaultSerializer implements JsonbSerializer<Object> {
 			}
 
 			ctx.serialize(fieldName, value, generator);
+		}
+
+		generator.writeEnd();
+	}
+
+	private void serializeArray(final Object array, final Class<?> clazz, final JsonGenerator generator, final SerializationContext ctx) {
+		generator.writeStartArray();
+
+		for (int i = 0; i < Array.getLength(array); ++i) {
+			final Object elem = Array.get(array, i);
+			ctx.serialize(elem, generator);
 		}
 
 		generator.writeEnd();
