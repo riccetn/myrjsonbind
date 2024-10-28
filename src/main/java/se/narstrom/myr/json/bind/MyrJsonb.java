@@ -25,6 +25,7 @@ import se.narstrom.myr.json.bind.serializer.BooleanSerializer;
 import se.narstrom.myr.json.bind.serializer.ByteSerializer;
 import se.narstrom.myr.json.bind.serializer.CharacterSerializer;
 import se.narstrom.myr.json.bind.serializer.DoubleSerializer;
+import se.narstrom.myr.json.bind.serializer.EnumSerializer;
 import se.narstrom.myr.json.bind.serializer.FloatSerializer;
 import se.narstrom.myr.json.bind.serializer.IntegerSerializer;
 import se.narstrom.myr.json.bind.serializer.LongSerializer;
@@ -39,6 +40,7 @@ public final class MyrJsonb implements Jsonb, SerializationContext, Deserializat
 	private Map<Class<?>, JsonbSerializer<?>> serializers = Map.ofEntries(
 	// @formatter:off
 		Map.entry(Object.class, new DefaultSerializer()),
+		Map.entry(Enum.class, new EnumSerializer()),
 		Map.entry(Boolean.class, new BooleanSerializer()),
 		Map.entry(Boolean.TYPE, new BooleanSerializer()),
 		Map.entry(Byte.class, new ByteSerializer()),
@@ -63,6 +65,7 @@ public final class MyrJsonb implements Jsonb, SerializationContext, Deserializat
 	private Map<Class<?>, JsonbDeserializer<?>> deserializers = Map.ofEntries(
 	// @formatter:off
 		Map.entry(Object.class, new DefaultDeserializer()),
+		Map.entry(Enum.class, new EnumSerializer()),
 		Map.entry(Boolean.class, new BooleanSerializer()),
 		Map.entry(Boolean.TYPE, new BooleanSerializer()),
 		Map.entry(Byte.class, new ByteSerializer()),
@@ -207,7 +210,11 @@ public final class MyrJsonb implements Jsonb, SerializationContext, Deserializat
 	@Override
 	public <T> void serialize(final String key, final T object, final JsonGenerator generator) {
 		generator.writeKey(key);
-		serialize(object, object.getClass(), generator);
+		if (object == null) {
+			generator.writeNull();
+		} else {
+			serialize(object, object.getClass(), generator);
+		}
 	}
 
 	@Override
