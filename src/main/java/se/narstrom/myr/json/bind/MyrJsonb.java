@@ -15,6 +15,7 @@ import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.OffsetTime;
 import java.time.Period;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
@@ -51,6 +52,7 @@ import se.narstrom.myr.json.bind.serializer.time.DateSerializer;
 import se.narstrom.myr.json.bind.serializer.time.DurationSerializer;
 import se.narstrom.myr.json.bind.serializer.time.JavaTimeSerializer;
 import se.narstrom.myr.json.bind.serializer.time.PeriodSerializer;
+import se.narstrom.myr.json.bind.serializer.time.ZoneIdSerializer;
 
 public final class MyrJsonb implements Jsonb, SerializationContext, DeserializationContext {
 	private final JsonbConfig config;
@@ -98,6 +100,7 @@ public final class MyrJsonb implements Jsonb, SerializationContext, Deserializat
 		Map.entry(OffsetTime.class, new JavaTimeSerializer<>(DateTimeFormatter.ISO_OFFSET_TIME, OffsetTime::from)),
 		Map.entry(Duration.class, new DurationSerializer()),
 		Map.entry(Period.class, new PeriodSerializer()),
+		Map.entry(ZoneId.class, new ZoneIdSerializer()),
 
 		// 3.7 Java Class
 		// 3.12 Array
@@ -153,6 +156,7 @@ public final class MyrJsonb implements Jsonb, SerializationContext, Deserializat
 		Map.entry(OffsetTime.class, new JavaTimeSerializer<>(DateTimeFormatter.ISO_OFFSET_TIME, OffsetTime::from)),
 		Map.entry(Duration.class, new DurationSerializer()),
 		Map.entry(Period.class, new PeriodSerializer()),
+		Map.entry(ZoneId.class, new ZoneIdSerializer()),
 
 		// 3.7 Java Class
 		// 3.12 Array
