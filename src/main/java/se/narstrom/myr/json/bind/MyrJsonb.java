@@ -19,7 +19,9 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TimeZone;
@@ -35,6 +37,7 @@ import jakarta.json.spi.JsonProvider;
 import jakarta.json.stream.JsonGenerator;
 import jakarta.json.stream.JsonParser;
 import jakarta.json.stream.JsonParser.Event;
+import se.narstrom.myr.json.bind.serializer.CollectionSerializer;
 import se.narstrom.myr.json.bind.serializer.EnumSerializer;
 import se.narstrom.myr.json.bind.serializer.TimeZoneSerializer;
 import se.narstrom.myr.json.bind.serializer.basic.BooleanSerializer;
@@ -110,7 +113,11 @@ public final class MyrJsonb implements Jsonb, SerializationContext, Deserializat
 
 		// 3.9 Enum
 		// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#enum
-		Map.entry(Enum.class, new EnumSerializer())
+		Map.entry(Enum.class, new EnumSerializer()),
+
+		// 3.11 Collections
+		// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#collections
+		Map.entry(Collection.class, new CollectionSerializer())
 	// @formatter:on
 	);
 
@@ -166,7 +173,12 @@ public final class MyrJsonb implements Jsonb, SerializationContext, Deserializat
 
 		// 3.9 Enum
 		// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#enum
-		Map.entry(Enum.class, new EnumSerializer())
+		Map.entry(Enum.class, new EnumSerializer()),
+
+		// 3.11 Collections
+		// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#collections
+		Map.entry(Collection.class, new CollectionSerializer()),
+		Map.entry(List.class, new CollectionSerializer())
 	// @formatter:on
 	);
 
