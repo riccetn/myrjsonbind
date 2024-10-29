@@ -24,6 +24,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.SimpleTimeZone;
 import java.util.TimeZone;
 
 import jakarta.json.bind.Jsonb;
@@ -55,6 +56,7 @@ import se.narstrom.myr.json.bind.serializer.time.DateSerializer;
 import se.narstrom.myr.json.bind.serializer.time.DurationSerializer;
 import se.narstrom.myr.json.bind.serializer.time.JavaTimeSerializer;
 import se.narstrom.myr.json.bind.serializer.time.PeriodSerializer;
+import se.narstrom.myr.json.bind.serializer.time.SimpleTimeZoneDeserializer;
 import se.narstrom.myr.json.bind.serializer.time.ZoneIdSerializer;
 
 public final class MyrJsonb implements Jsonb, SerializationContext, DeserializationContext {
@@ -152,6 +154,7 @@ public final class MyrJsonb implements Jsonb, SerializationContext, Deserializat
 		// 3.5.2. java.util.TimeZone, SimpleTimeZone
 		// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#java-util-timezone-simpletimezone
 		Map.entry(TimeZone.class, new TimeZoneSerializer()),
+		Map.entry(SimpleTimeZone.class, new SimpleTimeZoneDeserializer()),
 
 		// 3.5.3 java.time.*
 		Map.entry(Instant.class, new JavaTimeSerializer<>(DateTimeFormatter.ISO_INSTANT, Instant::from)),
