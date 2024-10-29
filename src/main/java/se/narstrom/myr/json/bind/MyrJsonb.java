@@ -40,7 +40,6 @@ import jakarta.json.stream.JsonParser;
 import jakarta.json.stream.JsonParser.Event;
 import se.narstrom.myr.json.bind.serializer.CollectionSerializer;
 import se.narstrom.myr.json.bind.serializer.EnumSerializer;
-import se.narstrom.myr.json.bind.serializer.TimeZoneSerializer;
 import se.narstrom.myr.json.bind.serializer.basic.BooleanSerializer;
 import se.narstrom.myr.json.bind.serializer.basic.ByteSerializer;
 import se.narstrom.myr.json.bind.serializer.basic.CharacterSerializer;
@@ -57,6 +56,7 @@ import se.narstrom.myr.json.bind.serializer.time.DurationSerializer;
 import se.narstrom.myr.json.bind.serializer.time.JavaTimeSerializer;
 import se.narstrom.myr.json.bind.serializer.time.PeriodSerializer;
 import se.narstrom.myr.json.bind.serializer.time.SimpleTimeZoneDeserializer;
+import se.narstrom.myr.json.bind.serializer.time.TimeZoneSerializer;
 import se.narstrom.myr.json.bind.serializer.time.ZoneIdSerializer;
 
 public final class MyrJsonb implements Jsonb, SerializationContext, DeserializationContext {
