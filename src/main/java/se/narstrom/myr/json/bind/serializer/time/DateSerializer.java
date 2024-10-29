@@ -3,7 +3,7 @@ package se.narstrom.myr.json.bind.serializer.time;
 import java.lang.reflect.Type;
 import java.time.DateTimeException;
 import java.time.Instant;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Date;
@@ -25,7 +25,7 @@ public final class DateSerializer implements JsonbSerializer<Date>, JsonbDeseria
 		if (parser.currentEvent() != Event.VALUE_STRING)
 			throw new JsonbException("Not a string");
 		try {
-			return Date.from(DateTimeFormatter.ISO_DATE_TIME.withZone(ZoneOffset.UTC).parse(parser.getString(), Instant::from));
+			return Date.from(DateTimeFormatter.ISO_DATE_TIME.withZone(ZoneId.of("UTC")).parse(parser.getString(), Instant::from));
 		} catch (final DateTimeParseException ex) {
 			throw new JsonbException(ex.getMessage(), ex);
 		}
@@ -34,7 +34,7 @@ public final class DateSerializer implements JsonbSerializer<Date>, JsonbDeseria
 	@Override
 	public void serialize(final Date obj, final JsonGenerator generator, final SerializationContext ctx) {
 		try {
-			generator.write(DateTimeFormatter.ISO_DATE_TIME.format(obj.toInstant().atZone(ZoneOffset.UTC)));
+			generator.write(DateTimeFormatter.ISO_DATE_TIME.format(obj.toInstant().atZone(ZoneId.of("UTC"))));
 		} catch (final DateTimeException ex) {
 			throw new JsonbException(ex.getMessage(), ex);
 		}
