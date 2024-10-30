@@ -81,8 +81,9 @@ public final class DefaultSerializer implements JsonbSerializer<Object> {
 			localProperties.put(prop.name(), prop);
 		}
 
-		// FIXME: Figure out what to do with properties that exists both in a super class and here
-		//        i.e. overridden getters, and shadowed fields.
+		// FIXME: Figure out what to do with properties that exists both in a super
+		// class and here
+		// i.e. overridden getters, and shadowed fields.
 		final List<Property> list = new ArrayList<>(localProperties.values());
 		list.sort(Comparator.comparing(Property::name));
 		result.addAll(list);
@@ -144,6 +145,9 @@ public final class DefaultSerializer implements JsonbSerializer<Object> {
 				continue;
 
 			if (Modifier.isStatic(field.getModifiers()))
+				continue;
+
+			if (Modifier.isTransient(field.getModifiers()))
 				continue;
 
 			final String fieldName = field.getName();
