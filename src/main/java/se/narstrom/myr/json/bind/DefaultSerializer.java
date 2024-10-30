@@ -4,8 +4,10 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
 
 import jakarta.json.bind.JsonbException;
 import jakarta.json.bind.serializer.JsonbSerializer;
@@ -24,64 +26,27 @@ public final class DefaultSerializer implements JsonbSerializer<Object> {
 		}
 
 		generator.writeStartObject();
-		final Set<String> writtenProperties = new HashSet<>();
 
-		for (final Method method : obj.getClass().getMethods()) {
-
-			if (method.getParameterCount() != 0)
-				continue;
-
-			if (method.isBridge())
-				continue;
-
-			if(Modifier.isStatic(method.getModifiers()))
-				continue;
-
-			final String methodName = method.getName();
-			if (methodName.equals("getClass"))
-				continue;
-
-			if (!methodName.startsWith("get"))
-				continue;
-
-			final int firstCodePoint = methodName.codePointAt(3);
-			if (!Character.isUpperCase(firstCodePoint))
-				continue;
-
-			final String propertyName;
-			if (firstCodePoint > 0xFFFF)
-				propertyName = Character.toString(Character.toLowerCase(firstCodePoint)) + methodName.substring(5);
-			else
-				propertyName = Character.toString(Character.toLowerCase(firstCodePoint)) + methodName.substring(4);
+		for (final Property property : findProperties(clazz)) {
+			generator.writeKey(property.name);
 
 			final Object value;
-			try {
-				value = method.invoke(obj);
-			} catch (final ReflectiveOperationException ex) {
-				throw new JsonbException(ex.getMessage(), ex);
+			if (property.getter() != null) {
+				try {
+					value = property.getter().invoke(obj);
+				} catch (final ReflectiveOperationException ex) {
+					throw new JsonbException(ex.getMessage(), ex);
+				}
+			} else if (property.field() != null) {
+				try {
+					value = property.field().get(obj);
+				} catch (final ReflectiveOperationException ex) {
+					throw new JsonbException(ex.getMessage(), ex);
+				}
+			} else {
+				throw new AssertionError("Not reachable");
 			}
-
-			ctx.serialize(propertyName, value, generator);
-			writtenProperties.add(propertyName);
-		}
-
-		for (final Field field : obj.getClass().getFields()) {
-			if(Modifier.isStatic(field.getModifiers()))
-				continue;
-
-			final String fieldName = field.getName();
-
-			if (writtenProperties.contains(fieldName))
-				continue;
-
-			final Object value;
-			try {
-				value = field.get(obj);
-			} catch (final ReflectiveOperationException ex) {
-				throw new JsonbException(ex.getMessage(), ex);
-			}
-
-			ctx.serialize(fieldName, value, generator);
+			ctx.serialize(value, generator);
 		}
 
 		generator.writeEnd();
@@ -98,4 +63,97 @@ public final class DefaultSerializer implements JsonbSerializer<Object> {
 		generator.writeEnd();
 	}
 
+	private List<Property> findProperties(final Class<?> clazz) {
+		if (clazz == Object.class)
+			return List.of();
+
+		final List<Property> result = new ArrayList<>();
+
+		final Class<?> superClazz = clazz.getSuperclass();
+		if (superClazz != null && superClazz != Object.class)
+			result.addAll(findProperties(superClazz));
+
+		final HashMap<String, Property> localProperties = new HashMap<String, Property>();
+		for (final Property prop : findFieldProperties(clazz)) {
+			localProperties.put(prop.name(), prop);
+		}
+		for (final Property prop : findGetterProperties(clazz)) {
+			localProperties.put(prop.name(), prop);
+		}
+
+		// FIXME: Figure out what to do with properties that exists both in a super class and here
+		//        i.e. overridden getters, and shadowed fields.
+		final List<Property> list = new ArrayList<>(localProperties.values());
+		list.sort(Comparator.comparing(Property::name));
+		result.addAll(list);
+
+		return result;
+	}
+
+	private List<Property> findGetterProperties(final Class<?> clazz) {
+		final List<Property> result = new ArrayList<>();
+
+		for (final Method method : clazz.getDeclaredMethods()) {
+
+			if (!Modifier.isPublic(method.getModifiers()))
+				continue;
+
+			if (Modifier.isStatic(method.getModifiers()))
+				continue;
+
+			if (method.isBridge())
+				continue;
+
+			if (method.getParameterCount() != 0)
+				continue;
+
+			final String methodName = method.getName();
+			if (methodName.equals("getClass"))
+				continue;
+
+			final int nameOffset;
+			if (methodName.startsWith("get"))
+				nameOffset = 3;
+			else if (methodName.startsWith("is"))
+				nameOffset = 2;
+			else
+				continue;
+
+			final int firstCodePoint = methodName.codePointAt(nameOffset);
+			if (!Character.isUpperCase(firstCodePoint))
+				continue;
+
+			final String propertyName;
+			if (firstCodePoint > 0xFFFF)
+				propertyName = Character.toString(Character.toLowerCase(firstCodePoint)) + methodName.substring(nameOffset + 2);
+			else
+				propertyName = Character.toString(Character.toLowerCase(firstCodePoint)) + methodName.substring(nameOffset + 1);
+
+			result.add(new Property(propertyName, method, null));
+		}
+
+		return result;
+	}
+
+	private List<Property> findFieldProperties(final Class<?> clazz) {
+		final List<Property> result = new ArrayList<>();
+
+		for (final Field field : clazz.getDeclaredFields()) {
+
+			if (!Modifier.isPublic(field.getModifiers()))
+				continue;
+
+			if (Modifier.isStatic(field.getModifiers()))
+				continue;
+
+			final String fieldName = field.getName();
+
+			result.add(new Property(fieldName, null, field));
+		}
+
+		return result;
+	}
+
+	private record Property(String name, Method getter, Field field) {
+	}
 }

@@ -82,6 +82,7 @@
 					</dependenciesToScan>
 					<includes>
 						<include>ee.jakarta.tck.json.bind.defaultmapping.arrays.**</include>
+						<include>ee.jakarta.tck.json.bind.defaultmapping.attributeorder.**</include>
 						<include>ee.jakarta.tck.json.bind.defaultmapping.basictypes.**</include>
 						<include>ee.jakarta.tck.json.bind.defaultmapping.bignumbers.**</include>
 						<include>ee.jakarta.tck.json.bind.defaultmapping.dates.**</include>
