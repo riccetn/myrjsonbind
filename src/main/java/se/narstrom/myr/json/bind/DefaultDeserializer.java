@@ -59,11 +59,11 @@ public final class DefaultDeserializer implements JsonbDeserializer<Object> {
 					field = null;
 				}
 
-				if (field != null) {
+				if (field != null && !Modifier.isStatic(field.getModifiers())) {
 					final Class<?> propertyType = field.getType();
 					final Object value = ctx.deserialize(propertyType, parser);
 					try {
-						field.set(propertyType, value);
+						field.set(instance, value);
 					} catch (final ReflectiveOperationException ex) {
 						throw new JsonbException(ex.getMessage(), ex);
 					}

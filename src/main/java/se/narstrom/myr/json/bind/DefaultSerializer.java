@@ -39,9 +39,12 @@ public final class DefaultSerializer implements JsonbSerializer<Object> {
 				}
 			} else if (property.field() != null) {
 				try {
+					property.field().setAccessible(true); // This is needed for some nested and anonymous classes
 					value = property.field().get(obj);
 				} catch (final ReflectiveOperationException ex) {
 					throw new JsonbException(ex.getMessage(), ex);
+				} finally {
+					property.field().setAccessible(false);
 				}
 			} else {
 				throw new AssertionError("Not reachable");
@@ -72,6 +75,9 @@ public final class DefaultSerializer implements JsonbSerializer<Object> {
 		final Class<?> superClazz = clazz.getSuperclass();
 		if (superClazz != null && superClazz != Object.class)
 			result.addAll(findProperties(superClazz));
+
+		if (Modifier.isPrivate(clazz.getModifiers()))
+			return result;
 
 		final HashMap<String, Property> localProperties = new HashMap<String, Property>();
 		for (final Property prop : findFieldProperties(clazz)) {
@@ -140,7 +146,6 @@ public final class DefaultSerializer implements JsonbSerializer<Object> {
 		final List<Property> result = new ArrayList<>();
 
 		for (final Field field : clazz.getDeclaredFields()) {
-
 			if (!Modifier.isPublic(field.getModifiers()))
 				continue;
 
