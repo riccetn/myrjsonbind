@@ -59,7 +59,7 @@ import se.narstrom.myr.json.bind.serializer.time.SimpleTimeZoneDeserializer;
 import se.narstrom.myr.json.bind.serializer.time.TimeZoneSerializer;
 import se.narstrom.myr.json.bind.serializer.time.ZoneIdSerializer;
 
-public final class MyrJsonb implements Jsonb, SerializationContext, DeserializationContext {
+public final class MyrJsonbContext implements Jsonb, SerializationContext, DeserializationContext {
 	private final JsonbConfig config;
 	private final JsonProvider jsonp;
 
@@ -185,7 +185,7 @@ public final class MyrJsonb implements Jsonb, SerializationContext, Deserializat
 	// @formatter:on
 	);
 
-	public MyrJsonb(final JsonbConfig config, final JsonProvider jsonp) {
+	public MyrJsonbContext(final JsonbConfig config, final JsonProvider jsonp) {
 		this.config = config;
 		this.jsonp = Objects.requireNonNull(jsonp);
 	}

@@ -29,7 +29,7 @@ public final class MyrJsonbBuilder implements JsonbBuilder {
 	public Jsonb build() {
 		if(jsonp == null)
 			jsonp = JsonProvider.provider();
-		return new MyrJsonb(config, jsonp);
+		return new MyrJsonbContext(config, jsonp);
 	}
 
 }
