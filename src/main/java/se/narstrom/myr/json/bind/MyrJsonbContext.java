@@ -108,9 +108,7 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 		Map.entry(ZoneId.class, new ZoneIdSerializer()),
 
 		// 3.7 Java Class
-		// 3.12 Array
 		// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#java-class
-		// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#arrays
 		Map.entry(Object.class, new DefaultSerializer()),
 
 		// 3.9 Enum
@@ -169,9 +167,7 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 		Map.entry(ZoneId.class, new ZoneIdSerializer()),
 
 		// 3.7 Java Class
-		// 3.12 Array
 		// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#java-class
-		// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#arrays
 		Map.entry(Object.class, new DefaultDeserializer()),
 
 		// 3.9 Enum
@@ -184,6 +180,11 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 		Map.entry(List.class, new CollectionSerializer())
 	// @formatter:on
 	);
+
+	// 3.12 Array
+	// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#arrays
+	private JsonbSerializer<?> arraySerializer = new ArraySerializer();
+	private JsonbDeserializer<?> arrayDeserializer = new ArraySerializer();
 
 	public MyrJsonbContext(final JsonbConfig config, final JsonProvider jsonp) {
 		this.config = config;
@@ -293,15 +294,22 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 	public <T> T deserialize(final Type type, final JsonParser parser) throws JsonbException {
 		if (parser.currentEvent() == null || parser.currentEvent() == Event.KEY_NAME)
 			parser.next();
+
 		if (parser.currentEvent() == Event.VALUE_NULL)
 			return null;
+
 		Class<?> clazz = (Class<?>) type;
+
+		if (clazz.isArray())
+			return (T) arrayDeserializer.deserialize(parser, this, type);
+
 		JsonbDeserializer<?> deserializer;
 		while ((deserializer = deserializers.get(clazz)) == null) {
 			clazz = clazz.getSuperclass();
 			if (clazz == null)
 				clazz = Object.class;
 		}
+
 		return (T) deserializer.deserialize(parser, this, type);
 	}
 
@@ -326,12 +334,19 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 
 	private <T> void serialize(final T object, final Type type, final JsonGenerator generator) throws JsonbException {
 		Class<?> clazz = (Class<?>) type;
+
+		if (clazz.isArray()) {
+			((JsonbSerializer<T>) arraySerializer).serialize(object, generator, this);
+			return;
+		}
+
 		JsonbSerializer<?> serializer;
 		while ((serializer = serializers.get(clazz)) == null) {
 			clazz = clazz.getSuperclass();
 			if (clazz == null)
 				clazz = Object.class;
 		}
+
 		((JsonbSerializer<T>) serializer).serialize(object, generator, this);
 	}
 }

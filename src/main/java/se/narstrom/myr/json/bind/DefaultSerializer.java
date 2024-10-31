@@ -1,6 +1,5 @@
 package se.narstrom.myr.json.bind;
 
-import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -21,19 +20,10 @@ public final class DefaultSerializer implements JsonbSerializer<Object> {
 	public void serialize(final Object object, final JsonGenerator generator, final SerializationContext context) {
 		final Class<?> clazz = object.getClass();
 
-		if (clazz.isArray()) {
-			serializeArray(object, clazz, generator, context);
-			return;
-		}
+		assert !clazz.isArray() && !clazz.isPrimitive();
 
-		serializeObject(object, clazz, generator, context);
-	}
-
-	private void serializeObject(final Object object, final Class<?> clazz, final JsonGenerator generator, final SerializationContext context) {
 		generator.writeStartObject();
-
 		serializeProperties(object, clazz, generator, context);
-
 		generator.writeEnd();
 	}
 
@@ -127,17 +117,6 @@ public final class DefaultSerializer implements JsonbSerializer<Object> {
 
 			context.serialize(property.name, value, generator);
 		}
-	}
-
-	private void serializeArray(final Object array, final Class<?> clazz, final JsonGenerator generator, final SerializationContext ctx) {
-		generator.writeStartArray();
-
-		for (int i = 0; i < Array.getLength(array); ++i) {
-			final Object elem = Array.get(array, i);
-			ctx.serialize(elem, generator);
-		}
-
-		generator.writeEnd();
 	}
 
 	static class Property {
