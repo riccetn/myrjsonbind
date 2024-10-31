@@ -6,6 +6,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.time.Duration;
 import java.time.Instant;
@@ -29,6 +30,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.SimpleTimeZone;
 import java.util.TimeZone;
+import java.util.logging.Logger;
 
 import jakarta.json.bind.Jsonb;
 import jakarta.json.bind.JsonbConfig;
@@ -63,6 +65,7 @@ import se.narstrom.myr.json.bind.serializer.time.TimeZoneSerializer;
 import se.narstrom.myr.json.bind.serializer.time.ZoneIdSerializer;
 
 public final class MyrJsonbContext implements Jsonb, SerializationContext, DeserializationContext {
+	private static final Logger LOG = Logger.getLogger(MyrJsonbContext.class.getName());
 	private final JsonbConfig config;
 	private final JsonProvider jsonp;
 
@@ -299,6 +302,8 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 
 		final JsonbDeserializer<?> deserializer = findDeserializer(type);
 
+		LOG.fine(() -> String.format("Deserializing %s with %s", type, deserializer.getClass().getName()));
+
 		return (T) deserializer.deserialize(parser, this, type);
 	}
 
@@ -324,11 +329,22 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 	private <T> void serialize(final T object, final Type type, final JsonGenerator generator) throws JsonbException {
 		final JsonbSerializer<?> serializer = findSerializer(type);
 
+		LOG.fine(() -> String.format("Serializing %s with %s", type, serializer.getClass().getName()));
+
 		((JsonbSerializer<T>) serializer).serialize(object, generator, this);
 	}
 
-	private JsonbDeserializer<?> findDeserializer(Type type) {
-		final Class<?> clazz = (Class<?>) type;
+	private Class<?> getClass(final Type type) {
+		if (type instanceof Class<?> clazz)
+			return clazz;
+		else if (type instanceof ParameterizedType parameterized)
+			return getClass(parameterized.getRawType());
+		else
+			throw new JsonbException("Unsupported type " + type);
+	}
+
+	private JsonbDeserializer<?> findDeserializer(final Type type) {
+		final Class<?> clazz = getClass(type);
 
 		{
 			final JsonbDeserializer<?> candidate = deserializers.get(clazz);
@@ -342,9 +358,9 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 				return candidate;
 		}
 
-		{
+		for (Class<?> superClazz = clazz; superClazz != null && superClazz != Object.class; superClazz = superClazz.getSuperclass()) {
 			final Deque<Class<?>> q = new ArrayDeque<>();
-			Collections.addAll(q, clazz.getInterfaces());
+			Collections.addAll(q, superClazz.getInterfaces());
 
 			while (!q.isEmpty()) {
 				final Class<?> interfaceClazz = q.poll();
@@ -363,8 +379,8 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 		return defaultDeserialzer;
 	}
 
-	private JsonbSerializer<?> findSerializer(Type type) {
-		final Class<?> clazz = (Class<?>) type;
+	private JsonbSerializer<?> findSerializer(final Type type) {
+		final Class<?> clazz = getClass(type);
 
 		{
 			final JsonbSerializer<?> candidate = serializers.get(clazz);
@@ -378,9 +394,9 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 				return candidate;
 		}
 
-		{
+		for (Class<?> superClazz = clazz; superClazz != null && superClazz != Object.class; superClazz = superClazz.getSuperclass()) {
 			final Deque<Class<?>> q = new ArrayDeque<>();
-			Collections.addAll(q, clazz.getInterfaces());
+			Collections.addAll(q, superClazz.getInterfaces());
 
 			while (!q.isEmpty()) {
 				final Class<?> interfaceClazz = q.poll();
