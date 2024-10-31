@@ -18,9 +18,12 @@ import java.time.Period;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayDeque;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
+import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -107,10 +110,6 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 		Map.entry(Period.class, new PeriodSerializer()),
 		Map.entry(ZoneId.class, new ZoneIdSerializer()),
 
-		// 3.7 Java Class
-		// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#java-class
-		Map.entry(Object.class, new DefaultSerializer()),
-
 		// 3.9 Enum
 		// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#enum
 		Map.entry(Enum.class, new EnumSerializer()),
@@ -166,20 +165,20 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 		Map.entry(Period.class, new PeriodSerializer()),
 		Map.entry(ZoneId.class, new ZoneIdSerializer()),
 
-		// 3.7 Java Class
-		// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#java-class
-		Map.entry(Object.class, new DefaultDeserializer()),
-
 		// 3.9 Enum
 		// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#enum
 		Map.entry(Enum.class, new EnumSerializer()),
 
 		// 3.11 Collections
 		// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#collections
-		Map.entry(Collection.class, new CollectionSerializer()),
-		Map.entry(List.class, new CollectionSerializer())
+		Map.entry(Collection.class, new CollectionSerializer())
 	// @formatter:on
 	);
+
+	// 3.7 Java Class
+	// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#java-class
+	private JsonbSerializer<?> defaultSerialzer = new DefaultSerializer();
+	private JsonbDeserializer<?> defaultDeserialzer = new DefaultDeserializer();
 
 	// 3.12 Array
 	// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#arrays
@@ -298,17 +297,7 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 		if (parser.currentEvent() == Event.VALUE_NULL)
 			return null;
 
-		Class<?> clazz = (Class<?>) type;
-
-		if (clazz.isArray())
-			return (T) arrayDeserializer.deserialize(parser, this, type);
-
-		JsonbDeserializer<?> deserializer;
-		while ((deserializer = deserializers.get(clazz)) == null) {
-			clazz = clazz.getSuperclass();
-			if (clazz == null)
-				clazz = Object.class;
-		}
+		final JsonbDeserializer<?> deserializer = findDeserializer(type);
 
 		return (T) deserializer.deserialize(parser, this, type);
 	}
@@ -333,20 +322,80 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 	}
 
 	private <T> void serialize(final T object, final Type type, final JsonGenerator generator) throws JsonbException {
-		Class<?> clazz = (Class<?>) type;
-
-		if (clazz.isArray()) {
-			((JsonbSerializer<T>) arraySerializer).serialize(object, generator, this);
-			return;
-		}
-
-		JsonbSerializer<?> serializer;
-		while ((serializer = serializers.get(clazz)) == null) {
-			clazz = clazz.getSuperclass();
-			if (clazz == null)
-				clazz = Object.class;
-		}
+		final JsonbSerializer<?> serializer = findSerializer(type);
 
 		((JsonbSerializer<T>) serializer).serialize(object, generator, this);
+	}
+
+	private JsonbDeserializer<?> findDeserializer(Type type) {
+		final Class<?> clazz = (Class<?>) type;
+
+		{
+			final JsonbDeserializer<?> candidate = deserializers.get(clazz);
+			if (candidate != null)
+				return candidate;
+		}
+
+		for (Class<?> superClazz = clazz.getSuperclass(); superClazz != null && superClazz != Object.class; superClazz = superClazz.getSuperclass()) {
+			final JsonbDeserializer<?> candidate = deserializers.get(superClazz);
+			if (candidate != null)
+				return candidate;
+		}
+
+		{
+			final Deque<Class<?>> q = new ArrayDeque<>();
+			Collections.addAll(q, clazz.getInterfaces());
+
+			while (!q.isEmpty()) {
+				final Class<?> interfaceClazz = q.poll();
+
+				final JsonbDeserializer<?> candidate = deserializers.get(interfaceClazz);
+				if (candidate != null)
+					return candidate;
+
+				Collections.addAll(q, interfaceClazz.getInterfaces());
+			}
+		}
+
+		if (clazz.isArray())
+			return arrayDeserializer;
+
+		return defaultDeserialzer;
+	}
+
+	private JsonbSerializer<?> findSerializer(Type type) {
+		final Class<?> clazz = (Class<?>) type;
+
+		{
+			final JsonbSerializer<?> candidate = serializers.get(clazz);
+			if (candidate != null)
+				return candidate;
+		}
+
+		for (Class<?> superClazz = clazz.getSuperclass(); superClazz != null && superClazz != Object.class; superClazz = superClazz.getSuperclass()) {
+			final JsonbSerializer<?> candidate = serializers.get(superClazz);
+			if (candidate != null)
+				return candidate;
+		}
+
+		{
+			final Deque<Class<?>> q = new ArrayDeque<>();
+			Collections.addAll(q, clazz.getInterfaces());
+
+			while (!q.isEmpty()) {
+				final Class<?> interfaceClazz = q.poll();
+
+				final JsonbSerializer<?> candidate = serializers.get(interfaceClazz);
+				if (candidate != null)
+					return candidate;
+
+				Collections.addAll(q, interfaceClazz.getInterfaces());
+			}
+		}
+
+		if (clazz.isArray())
+			return arraySerializer;
+
+		return defaultSerialzer;
 	}
 }
