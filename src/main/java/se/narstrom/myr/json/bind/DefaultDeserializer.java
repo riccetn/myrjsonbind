@@ -57,34 +57,30 @@ public final class DefaultDeserializer implements JsonbDeserializer<Object> {
 			final String name = parser.getString();
 
 			if (name.isEmpty()) {
-				parser.getValue();
-				parser.next();
+				skipObject(parser);
 				continue;
 			}
 
 			Field field;
 			try {
-				field = clazz.getField(name);
+				field = clazz.getDeclaredField(name);
 			} catch (final NoSuchFieldException ex) {
 				field = null;
 			}
 
 			if (field != null) {
 				if (Modifier.isStatic(field.getModifiers())) {
-					parser.getValue();
-					parser.next();
+					skipObject(parser);
 					continue;
 				}
 
 				if (Modifier.isFinal(field.getModifiers())) {
-					parser.getValue();
-					parser.next();
+					skipObject(parser);
 					continue;
 				}
 
 				if (Modifier.isTransient(field.getModifiers())) {
-					parser.getValue();
-					parser.next();
+					skipObject(parser);
 					continue;
 				}
 			}
@@ -102,20 +98,17 @@ public final class DefaultDeserializer implements JsonbDeserializer<Object> {
 
 				if (setter != null) {
 					if (!Modifier.isPublic(setter.getModifiers())) {
-						parser.getValue();
-						parser.next();
+						skipObject(parser);
 						continue;
 					}
 
 					if (Modifier.isStatic(setter.getModifiers())) {
-						parser.getValue();
-						parser.next();
+						skipObject(parser);
 						continue;
 					}
 
 					if (setter.isBridge()) {
-						parser.getValue();
-						parser.next();
+						skipObject(parser);
 						continue;
 					}
 				}
@@ -129,8 +122,12 @@ public final class DefaultDeserializer implements JsonbDeserializer<Object> {
 			}
 
 			if (propertyType == null) {
-				parser.getValue();
-				parser.next();
+				skipObject(parser);
+				continue;
+			}
+
+			if (setter == null && !Modifier.isPublic(field.getModifiers())) {
+				skipObject(parser);
 				continue;
 			}
 
@@ -144,6 +141,7 @@ public final class DefaultDeserializer implements JsonbDeserializer<Object> {
 				}
 			} else {
 				assert field != null;
+
 				try {
 					field.setAccessible(true);
 					field.set(instance, value);
@@ -156,6 +154,11 @@ public final class DefaultDeserializer implements JsonbDeserializer<Object> {
 		}
 
 		return instance;
+	}
+
+	private void skipObject(final JsonParser parser) {
+		parser.getValue();
+		parser.next();
 	}
 
 	private Constructor<?> findConstructor(final Class<?> clazz) {
@@ -182,7 +185,7 @@ public final class DefaultDeserializer implements JsonbDeserializer<Object> {
 			setterName = "set" + Character.toString(Character.toUpperCase(firstCodePoint)) + name.substring(1);
 
 		try {
-			return clazz.getMethod(setterName, propertyClazz);
+			return clazz.getDeclaredMethod(setterName, propertyClazz);
 		} catch (final NoSuchMethodException ex) {
 			return null;
 		}
