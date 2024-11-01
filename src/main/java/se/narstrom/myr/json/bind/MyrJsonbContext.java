@@ -45,6 +45,7 @@ import jakarta.json.stream.JsonParser;
 import jakarta.json.stream.JsonParser.Event;
 import se.narstrom.myr.json.bind.serializer.CollectionSerializer;
 import se.narstrom.myr.json.bind.serializer.EnumSerializer;
+import se.narstrom.myr.json.bind.serializer.MapSerializer;
 import se.narstrom.myr.json.bind.serializer.basic.BooleanSerializer;
 import se.narstrom.myr.json.bind.serializer.basic.ByteSerializer;
 import se.narstrom.myr.json.bind.serializer.basic.CharacterSerializer;
@@ -119,7 +120,8 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 
 		// 3.11 Collections
 		// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#collections
-		Map.entry(Collection.class, new CollectionSerializer())
+		Map.entry(Collection.class, new CollectionSerializer()),
+		Map.entry(Map.class, new MapSerializer())
 	// @formatter:on
 	);
 
@@ -174,7 +176,8 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 
 		// 3.11 Collections
 		// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#collections
-		Map.entry(Collection.class, new CollectionSerializer())
+		Map.entry(Collection.class, new CollectionSerializer()),
+		Map.entry(Map.class, new MapSerializer())
 	// @formatter:on
 	);
 

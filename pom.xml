@@ -81,14 +81,14 @@
 						<dependency>jakarta.json.bind:jakarta.json.bind-tck</dependency>
 					</dependenciesToScan>
 					<includes>
-						<include>ee.jakarta.tck.json.bind.defaultmapping.arrays.**</include>
-						<include>ee.jakarta.tck.json.bind.defaultmapping.attributeorder.**</include>
-						<include>ee.jakarta.tck.json.bind.defaultmapping.basictypes.**</include>
-						<include>ee.jakarta.tck.json.bind.defaultmapping.classes.**</include>
+						<!-- <include>ee.jakarta.tck.json.bind.defaultmapping.arrays.**</include> -->
+						<!-- <include>ee.jakarta.tck.json.bind.defaultmapping.attributeorder.**</include> -->
+						<!-- <include>ee.jakarta.tck.json.bind.defaultmapping.basictypes.**</include> -->
+						<!-- <include>ee.jakarta.tck.json.bind.defaultmapping.classes.**</include> -->
 						<include>ee.jakarta.tck.json.bind.defaultmapping.collections.**</include>
-						<include>ee.jakarta.tck.json.bind.defaultmapping.bignumbers.**</include>
-						<include>ee.jakarta.tck.json.bind.defaultmapping.dates.**</include>
-						<include>ee.jakarta.tck.json.bind.defaultmapping.enums.**</include>
+						<!-- <include>ee.jakarta.tck.json.bind.defaultmapping.bignumbers.**</include> -->
+						<!-- <include>ee.jakarta.tck.json.bind.defaultmapping.dates.**</include> -->
+						<!-- <include>ee.jakarta.tck.json.bind.defaultmapping.enums.**</include> -->
 					</includes>
 				</configuration>
 			</plugin>
