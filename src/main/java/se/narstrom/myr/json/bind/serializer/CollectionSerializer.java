@@ -12,13 +12,14 @@ import jakarta.json.bind.serializer.SerializationContext;
 import jakarta.json.stream.JsonGenerator;
 import jakarta.json.stream.JsonParser;
 import jakarta.json.stream.JsonParser.Event;
+import se.narstrom.myr.json.bind.ReflectionUilities;
 
 // https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#collections
 public final class CollectionSerializer implements JsonbSerializer<Collection<?>>, JsonbDeserializer<Collection<?>> {
 
 	@Override
 	public Collection<?> deserialize(final JsonParser parser, final DeserializationContext ctx, final Type type) {
-		final Class<?> clazz = findClass(type);
+		final Class<?> clazz = ReflectionUilities.getClass(type);
 		final Type elementType = findElementType(type);
 		if (elementType == null)
 			throw new ClassCastException("Not a collection?");
@@ -47,16 +48,6 @@ public final class CollectionSerializer implements JsonbSerializer<Collection<?>
 			ctx.serialize(element, generator);
 		}
 		generator.writeEnd();
-	}
-
-	private Class<?> findClass(final Type type) {
-		if (type instanceof ParameterizedType parameterized) {
-			return (Class<?>) parameterized.getRawType();
-		} else if (type instanceof Class<?>) {
-			return (Class<?>) type;
-		} else {
-			throw new JsonbException("Unsupported type implementation: " + type.getClass().getName());
-		}
 	}
 
 	private Type findElementType(final Type type) {

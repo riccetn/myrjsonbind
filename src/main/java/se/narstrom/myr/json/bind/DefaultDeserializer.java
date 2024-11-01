@@ -17,7 +17,7 @@ public final class DefaultDeserializer implements JsonbDeserializer<Object> {
 
 	@Override
 	public Object deserialize(final JsonParser parser, final DeserializationContext ctx, final Type type) {
-		final Class<?> clazz = (Class<?>) type;
+		final Class<?> clazz = ReflectionUilities.getClass(type);
 
 		assert !clazz.isArray() && !clazz.isPrimitive();
 

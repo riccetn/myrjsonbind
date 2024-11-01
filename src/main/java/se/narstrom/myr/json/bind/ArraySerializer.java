@@ -1,12 +1,10 @@
 package se.narstrom.myr.json.bind;
 
 import java.lang.reflect.Array;
-import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.json.bind.JsonbException;
 import jakarta.json.bind.serializer.DeserializationContext;
 import jakarta.json.bind.serializer.JsonbDeserializer;
 import jakarta.json.bind.serializer.JsonbSerializer;
@@ -37,7 +35,7 @@ public final class ArraySerializer implements JsonbSerializer<Object>, JsonbDese
 		final Class<?> clazz = (Class<?>) type;
 		assert clazz.isArray();
 
-		final Type componentType = getComponentType(type);
+		final Type componentType = ReflectionUilities.getComponentType(type);
 		final Class<?> componentClazz = clazz.getComponentType();
 		final List<Object> elements = new ArrayList<>();
 
@@ -52,17 +50,7 @@ public final class ArraySerializer implements JsonbSerializer<Object>, JsonbDese
 		for (final Object element : elements) {
 			Array.set(array, index++, element);
 		}
-		
-		return array;
-	}
 
-	private Type getComponentType(final Type type) {
-		if (type instanceof GenericArrayType genericType) {
-			return genericType.getGenericComponentType();
-		} else if (type instanceof Class<?> clazz) {
-			return clazz.getComponentType();
-		} else {
-			throw new JsonbException("Unsupported array type " + type);
-		}
+		return array;
 	}
 }

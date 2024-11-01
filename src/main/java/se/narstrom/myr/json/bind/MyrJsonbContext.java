@@ -334,17 +334,8 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 		((JsonbSerializer<T>) serializer).serialize(object, generator, this);
 	}
 
-	private Class<?> getClass(final Type type) {
-		if (type instanceof Class<?> clazz)
-			return clazz;
-		else if (type instanceof ParameterizedType parameterized)
-			return getClass(parameterized.getRawType());
-		else
-			throw new JsonbException("Unsupported type " + type);
-	}
-
 	private JsonbDeserializer<?> findDeserializer(final Type type) {
-		final Class<?> clazz = getClass(type);
+		final Class<?> clazz = ReflectionUilities.getClass(type);
 
 		{
 			final JsonbDeserializer<?> candidate = deserializers.get(clazz);
@@ -380,7 +371,7 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 	}
 
 	private JsonbSerializer<?> findSerializer(final Type type) {
-		final Class<?> clazz = getClass(type);
+		final Class<?> clazz = ReflectionUilities.getClass(type);
 
 		{
 			final JsonbSerializer<?> candidate = serializers.get(clazz);
