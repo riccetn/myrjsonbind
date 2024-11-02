@@ -42,6 +42,10 @@ public final class ReflectionUilities {
 		for (final Type interfaceType : getInterfaces(type)) {
 			if (rawInterfaceType == getRawType(interfaceType))
 				return interfaceType;
+
+			final Type superInterface = getGenericInterfaceType(interfaceType, rawInterfaceType);
+			if (superInterface != null)
+				return superInterface;
 		}
 
 		return getGenericInterfaceType(getSuperType(type), rawInterfaceType);
