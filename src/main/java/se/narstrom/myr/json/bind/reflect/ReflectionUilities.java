@@ -39,6 +39,9 @@ public final class ReflectionUilities {
 		if (type == null)
 			return null;
 
+		if (getRawType(type) == rawInterfaceType)
+			return type;
+
 		for (final Type interfaceType : getInterfaces(type)) {
 			if (rawInterfaceType == getRawType(interfaceType))
 				return interfaceType;
