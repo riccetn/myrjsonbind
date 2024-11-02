@@ -1,4 +1,4 @@
-package se.narstrom.myr.json.bind;
+package se.narstrom.myr.json.bind.serializer;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;

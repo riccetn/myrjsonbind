@@ -1,4 +1,4 @@
-package se.narstrom.myr.json.bind;
+package se.narstrom.myr.json.bind.serializer;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -12,6 +12,7 @@ import jakarta.json.bind.serializer.DeserializationContext;
 import jakarta.json.bind.serializer.JsonbDeserializer;
 import jakarta.json.stream.JsonParser;
 import jakarta.json.stream.JsonParser.Event;
+import se.narstrom.myr.json.bind.ReflectionUilities;
 
 public final class DefaultDeserializer implements JsonbDeserializer<Object> {
 
