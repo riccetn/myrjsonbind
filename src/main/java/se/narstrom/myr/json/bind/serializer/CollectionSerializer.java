@@ -77,32 +77,17 @@ public final class CollectionSerializer implements JsonbSerializer<Collection<?>
 	}
 
 	private Type findElementType(final Type type) {
-		final Class<?> clazz;
-		if (type instanceof ParameterizedType parameterized) {
-			clazz = (Class<?>) parameterized.getRawType();
-			if (clazz == Collection.class)
-				return parameterized.getActualTypeArguments()[0];
-		} else if (type instanceof Class<?>) {
-			clazz = (Class<?>) type;
-			if (clazz == Collection.class)
-				return Object.class;
+		final Type genericCollection;
+		try {
+			genericCollection = ReflectionUilities.getGenericInterfaceType(type, Collection.class);
+		} catch (final ReflectiveOperationException ex) {
+			throw new JsonbException(ex.getMessage(), ex);
+		}
+
+		if (genericCollection instanceof ParameterizedType parameterized) {
+			return parameterized.getActualTypeArguments()[0];
 		} else {
-			throw new JsonbException("Unsupported type implementation: " + type.getClass().getName());
+			return Object.class;
 		}
-
-		for (final Type interfaceType : clazz.getGenericInterfaces()) {
-			final Type found = findElementType(interfaceType);
-			if (found != null)
-				return found;
-		}
-
-		final Type superType = clazz.getGenericSuperclass();
-		if (superType != null) {
-			final Type found = findElementType(superType);
-			if (found != null)
-				return found;
-		}
-
-		return null;
 	}
 }
