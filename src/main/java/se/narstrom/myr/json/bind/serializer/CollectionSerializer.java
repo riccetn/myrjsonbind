@@ -1,8 +1,18 @@
 package se.narstrom.myr.json.bind.serializer;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.List;
+import java.util.NavigableSet;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import jakarta.json.bind.JsonbException;
 import jakarta.json.bind.serializer.DeserializationContext;
@@ -29,7 +39,7 @@ public final class CollectionSerializer implements JsonbSerializer<Collection<?>
 
 		final Collection<?> instance;
 		try {
-			instance = (Collection<?>) clazz.getConstructor().newInstance();
+			instance = (Collection<?>) getConstructor(clazz).newInstance();
 		} catch (final ReflectiveOperationException | ClassCastException ex) {
 			throw new JsonbException(ex.getMessage(), ex);
 		}
@@ -48,6 +58,22 @@ public final class CollectionSerializer implements JsonbSerializer<Collection<?>
 			ctx.serialize(element, generator);
 		}
 		generator.writeEnd();
+	}
+
+	private Constructor<?> getConstructor(final Class<?> type) throws ReflectiveOperationException {
+		if (!type.isInterface())
+			return type.getConstructor();
+
+		else if (type == Collection.class || type == List.class)
+			return ArrayList.class.getConstructor();
+		else if (type == Set.class)
+			return HashSet.class.getConstructor();
+		else if (type == NavigableSet.class || type == SortedSet.class)
+			return TreeSet.class.getConstructor();
+		else if (type == Deque.class)
+			return ArrayDeque.class.getConstructor();
+		else
+			throw new JsonbException("Unsupported interface type " + type);
 	}
 
 	private Type findElementType(final Type type) {
