@@ -12,7 +12,7 @@ import jakarta.json.bind.serializer.SerializationContext;
 import jakarta.json.stream.JsonGenerator;
 import jakarta.json.stream.JsonParser;
 import jakarta.json.stream.JsonParser.Event;
-import se.narstrom.myr.json.bind.ReflectionUilities;
+import se.narstrom.myr.json.bind.reflect.ReflectionUilities;
 
 public final class ArraySerializer implements JsonbSerializer<Object>, JsonbDeserializer<Object> {
 

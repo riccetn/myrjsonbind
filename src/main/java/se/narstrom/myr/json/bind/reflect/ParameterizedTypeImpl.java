@@ -1,4 +1,4 @@
-package se.narstrom.myr.json.bind;
+package se.narstrom.myr.json.bind.reflect;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;

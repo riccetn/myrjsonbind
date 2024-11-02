@@ -22,7 +22,7 @@ import jakarta.json.bind.serializer.SerializationContext;
 import jakarta.json.stream.JsonGenerator;
 import jakarta.json.stream.JsonParser;
 import jakarta.json.stream.JsonParser.Event;
-import se.narstrom.myr.json.bind.ReflectionUilities;
+import se.narstrom.myr.json.bind.reflect.ReflectionUilities;
 
 // https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#collections
 public final class CollectionSerializer implements JsonbSerializer<Collection<?>>, JsonbDeserializer<Collection<?>> {

@@ -43,6 +43,7 @@ import jakarta.json.spi.JsonProvider;
 import jakarta.json.stream.JsonGenerator;
 import jakarta.json.stream.JsonParser;
 import jakarta.json.stream.JsonParser.Event;
+import se.narstrom.myr.json.bind.reflect.ReflectionUilities;
 import se.narstrom.myr.json.bind.serializer.ArraySerializer;
 import se.narstrom.myr.json.bind.serializer.CollectionSerializer;
 import se.narstrom.myr.json.bind.serializer.DefaultDeserializer;
