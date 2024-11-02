@@ -10,6 +10,7 @@ import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
 import java.util.NavigableSet;
+import java.util.Queue;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -70,7 +71,7 @@ public final class CollectionSerializer implements JsonbSerializer<Collection<?>
 			return HashSet.class.getConstructor();
 		else if (type == NavigableSet.class || type == SortedSet.class)
 			return TreeSet.class.getConstructor();
-		else if (type == Deque.class)
+		else if (type == Queue.class || type == Deque.class)
 			return ArrayDeque.class.getConstructor();
 		else
 			throw new JsonbException("Unsupported interface type " + type);
