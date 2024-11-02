@@ -205,6 +205,10 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 		/* Nothing to do */
 	}
 
+	public JsonbConfig getConfig() {
+		return config;
+	}
+
 	@Override
 	public <T> T fromJson(final InputStream stream, final Class<T> type) throws JsonbException {
 		try (final JsonParser parser = jsonp.createParser(stream)) {

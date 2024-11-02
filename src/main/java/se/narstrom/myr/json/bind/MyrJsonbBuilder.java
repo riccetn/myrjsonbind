@@ -27,7 +27,9 @@ public final class MyrJsonbBuilder implements JsonbBuilder {
 
 	@Override
 	public Jsonb build() {
-		if(jsonp == null)
+		if (config == null)
+			config = new JsonbConfig();
+		if (jsonp == null)
 			jsonp = JsonProvider.provider();
 		return new MyrJsonbContext(config, jsonp);
 	}

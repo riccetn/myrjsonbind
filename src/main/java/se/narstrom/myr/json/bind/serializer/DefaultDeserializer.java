@@ -12,6 +12,7 @@ import jakarta.json.bind.serializer.DeserializationContext;
 import jakarta.json.bind.serializer.JsonbDeserializer;
 import jakarta.json.stream.JsonParser;
 import jakarta.json.stream.JsonParser.Event;
+import se.narstrom.myr.json.bind.MyrJsonbContext;
 import se.narstrom.myr.json.bind.reflect.ReflectionUilities;
 
 public final class DefaultDeserializer implements JsonbDeserializer<Object> {
@@ -28,7 +29,7 @@ public final class DefaultDeserializer implements JsonbDeserializer<Object> {
 		return deserializeObject(parser, ctx, clazz);
 	}
 
-	private Object deserializeObject(final JsonParser parser, final DeserializationContext ctx, final Class<?> clazz) {
+	private Object deserializeObject(final JsonParser parser, final DeserializationContext context, final Class<?> clazz) {
 
 		final Constructor<?> constructor = findConstructor(clazz);
 		if (constructor == null)
@@ -50,7 +51,7 @@ public final class DefaultDeserializer implements JsonbDeserializer<Object> {
 			final String name = parser.getString();
 
 			if (name.isEmpty()) {
-				skipObject(parser);
+				skipObject(parser, context);
 				continue;
 			}
 
@@ -63,17 +64,17 @@ public final class DefaultDeserializer implements JsonbDeserializer<Object> {
 
 			if (field != null) {
 				if (Modifier.isStatic(field.getModifiers())) {
-					skipObject(parser);
+					skipObject(parser, context);
 					continue;
 				}
 
 				if (Modifier.isFinal(field.getModifiers())) {
-					skipObject(parser);
+					skipObject(parser, context);
 					continue;
 				}
 
 				if (Modifier.isTransient(field.getModifiers())) {
-					skipObject(parser);
+					skipObject(parser, context);
 					continue;
 				}
 			}
@@ -91,17 +92,17 @@ public final class DefaultDeserializer implements JsonbDeserializer<Object> {
 
 				if (setter != null) {
 					if (!Modifier.isPublic(setter.getModifiers())) {
-						skipObject(parser);
+						skipObject(parser, context);
 						continue;
 					}
 
 					if (Modifier.isStatic(setter.getModifiers())) {
-						skipObject(parser);
+						skipObject(parser, context);
 						continue;
 					}
 
 					if (setter.isBridge()) {
-						skipObject(parser);
+						skipObject(parser, context);
 						continue;
 					}
 				}
@@ -115,16 +116,16 @@ public final class DefaultDeserializer implements JsonbDeserializer<Object> {
 			}
 
 			if (propertyType == null) {
-				skipObject(parser);
+				skipObject(parser, context);
 				continue;
 			}
 
 			if (setter == null && !Modifier.isPublic(field.getModifiers())) {
-				skipObject(parser);
+				skipObject(parser, context);
 				continue;
 			}
 
-			final Object value = ctx.deserialize(propertyType, parser);
+			final Object value = context.deserialize(propertyType, parser);
 
 			if (setter != null) {
 				try {
@@ -149,7 +150,9 @@ public final class DefaultDeserializer implements JsonbDeserializer<Object> {
 		return instance;
 	}
 
-	private void skipObject(final JsonParser parser) {
+	private void skipObject(final JsonParser parser, final DeserializationContext context) {
+		if (context instanceof MyrJsonbContext myrContext && myrContext.getConfig().getProperty("jsonb.fail-on-unknown-properties").orElse(Boolean.FALSE) == Boolean.TRUE)
+			throw new JsonbException("No java property for json property");
 		parser.getValue();
 		parser.next();
 	}
