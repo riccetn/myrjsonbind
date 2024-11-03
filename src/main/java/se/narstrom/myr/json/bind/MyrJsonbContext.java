@@ -8,6 +8,7 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -20,12 +21,13 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Deque;
-import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.SimpleTimeZone;
@@ -75,6 +77,19 @@ import se.narstrom.myr.json.bind.serializer.time.ZoneIdSerializer;
 
 public final class MyrJsonbContext implements Jsonb, SerializationContext, DeserializationContext {
 	private static final Logger LOG = Logger.getLogger(MyrJsonbContext.class.getName());
+
+	private static final Map<Event, Type> DEFAULT_TYPES = Map.ofEntries(
+	// @formatter:off
+		Map.entry(Event.START_OBJECT, LinkedHashMap.class),
+		Map.entry(Event.START_ARRAY, ArrayList.class),
+		Map.entry(Event.VALUE_STRING, String.class),
+		Map.entry(Event.VALUE_NUMBER, BigDecimal.class),
+		Map.entry(Event.VALUE_TRUE, Boolean.class),
+		Map.entry(Event.VALUE_FALSE, Boolean.class),
+		Map.entry(Event.VALUE_NULL, Object.class)
+	// @formatter:on
+	);
+
 	private final JsonbConfig config;
 	private final JsonProvider jsonp;
 
@@ -324,10 +339,7 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 		if (parser.currentEvent() == null || parser.currentEvent() == Event.KEY_NAME)
 			parser.next();
 
-//		if (parser.currentEvent() == Event.VALUE_NULL)
-//			return null;
-
-		final JsonbDeserializer<?> deserializer = findDeserializer(type);
+		final JsonbDeserializer<?> deserializer = findDeserializer(type, parser);
 
 		LOG.fine(() -> String.format("Deserializing %s with %s", type, deserializer.getClass().getName()));
 
@@ -361,8 +373,17 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 		((JsonbSerializer<T>) serializer).serialize(object, generator, this);
 	}
 
-	private JsonbDeserializer<?> findDeserializer(final Type type) {
-		final Class<?> clazz = ReflectionUilities.getClass(type);
+	private JsonbDeserializer<?> findDeserializer(final Type type, final JsonParser parser) {
+		final Class<?> clazz;
+
+		if (type == Object.class) {
+			// FIXME: Include generic type information with default types
+			clazz = (Class<?>) DEFAULT_TYPES.get(parser.currentEvent());
+			if (clazz == null)
+				throw new JsonbException("Parser in wrong state: " + parser.currentEvent());
+		} else {
+			clazz = ReflectionUilities.getClass(type);
+		}
 
 		{
 			final JsonbDeserializer<?> candidate = deserializers.get(clazz);
