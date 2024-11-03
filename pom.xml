@@ -93,6 +93,7 @@
 						<include>ee.jakarta.tck.json.bind.defaultmapping.ignore.**</include>
 						<include>ee.jakarta.tck.json.bind.defaultmapping.jsonptypes.**</include>
 						<include>ee.jakarta.tck.json.bind.defaultmapping.nullvalue.**</include>
+						<include>ee.jakarta.tck.json.bind.defaultmapping.specifictypes.**</include>
 					</includes>
 				</configuration>
 			</plugin>

@@ -35,23 +35,23 @@ public final class ReflectionUilities {
 		}
 	}
 
-	public static Type getGenericInterfaceType(final Type type, final Class<?> rawInterfaceType) throws ReflectiveOperationException {
+	public static Type getAncestorType(final Type type, final Class<?> rawAncestor) throws ReflectiveOperationException {
 		if (type == null)
 			return null;
 
-		if (getRawType(type) == rawInterfaceType)
+		if (getRawType(type) == rawAncestor)
 			return type;
 
 		for (final Type interfaceType : getInterfaces(type)) {
-			if (rawInterfaceType == getRawType(interfaceType))
+			if (rawAncestor == getRawType(interfaceType))
 				return interfaceType;
 
-			final Type superInterface = getGenericInterfaceType(interfaceType, rawInterfaceType);
+			final Type superInterface = getAncestorType(interfaceType, rawAncestor);
 			if (superInterface != null)
 				return superInterface;
 		}
 
-		return getGenericInterfaceType(getSuperType(type), rawInterfaceType);
+		return getAncestorType(getSuperType(type), rawAncestor);
 	}
 
 	public static Type[] getInterfaces(final Type type) throws ReflectiveOperationException {

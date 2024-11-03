@@ -6,7 +6,6 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -30,6 +29,10 @@ import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.OptionalDouble;
+import java.util.OptionalInt;
+import java.util.OptionalLong;
 import java.util.SimpleTimeZone;
 import java.util.TimeZone;
 import java.util.logging.Logger;
@@ -66,6 +69,10 @@ import se.narstrom.myr.json.bind.serializer.basic.LongSerializer;
 import se.narstrom.myr.json.bind.serializer.basic.NumberSerializer;
 import se.narstrom.myr.json.bind.serializer.basic.ShortSerializer;
 import se.narstrom.myr.json.bind.serializer.basic.StringSerializer;
+import se.narstrom.myr.json.bind.serializer.optional.OptionalDoubleSerializer;
+import se.narstrom.myr.json.bind.serializer.optional.OptionalIntSerializer;
+import se.narstrom.myr.json.bind.serializer.optional.OptionalLongSerializer;
+import se.narstrom.myr.json.bind.serializer.optional.OptionalSerializer;
 import se.narstrom.myr.json.bind.serializer.time.CalendarSerializer;
 import se.narstrom.myr.json.bind.serializer.time.DateSerializer;
 import se.narstrom.myr.json.bind.serializer.time.DurationSerializer;
@@ -146,6 +153,13 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 		Map.entry(Collection.class, new CollectionSerializer()),
 		Map.entry(Map.class, new MapSerializer()),
 
+		// 3.14 Null value handling
+		// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#null-java-field
+		Map.entry(Optional.class, new OptionalSerializer()),
+		Map.entry(OptionalDouble.class, new OptionalDoubleSerializer()),
+		Map.entry(OptionalInt.class, new OptionalIntSerializer()),
+		Map.entry(OptionalLong.class, new OptionalLongSerializer()),
+
 		// 3.20 JSON Processing integration
 		// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#json-processing-integration
 		Map.entry(JsonArray.class, new JsonpSerializer()),
@@ -207,6 +221,13 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 		// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#collections
 		Map.entry(Collection.class, new CollectionSerializer()),
 		Map.entry(Map.class, new MapSerializer()),
+
+		// 3.14 Null value handling
+		// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#null-java-field
+		Map.entry(Optional.class, new OptionalSerializer()),
+		Map.entry(OptionalDouble.class, new OptionalDoubleSerializer()),
+		Map.entry(OptionalInt.class, new OptionalIntSerializer()),
+		Map.entry(OptionalLong.class, new OptionalLongSerializer()),
 
 		// 3.20 JSON Processing integration
 		// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#json-processing-integration

@@ -80,7 +80,7 @@ public final class CollectionSerializer implements JsonbSerializer<Collection<?>
 	private Type findElementType(final Type type) {
 		final Type genericCollection;
 		try {
-			genericCollection = ReflectionUilities.getGenericInterfaceType(type, Collection.class);
+			genericCollection = ReflectionUilities.getAncestorType(type, Collection.class);
 		} catch (final ReflectiveOperationException ex) {
 			throw new JsonbException(ex.getMessage(), ex);
 		}

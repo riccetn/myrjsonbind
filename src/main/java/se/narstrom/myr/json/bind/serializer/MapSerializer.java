@@ -90,7 +90,7 @@ public final class MapSerializer implements JsonbSerializer<Map<String, ?>>, Jso
 	private Type[] getKeyAndValueTypes(final Type type) {
 		final Type genericMap;
 		try {
-			genericMap = ReflectionUilities.getGenericInterfaceType(type, Map.class);
+			genericMap = ReflectionUilities.getAncestorType(type, Map.class);
 		} catch (final ReflectiveOperationException ex) {
 			throw new JsonbException(ex.getMessage(), ex);
 		}
