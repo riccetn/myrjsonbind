@@ -369,12 +369,18 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 
 	@Override
 	public <T> void serialize(final String key, final T object, final JsonGenerator generator) {
-		generator.writeKey(key);
-		if (object == null) {
-			generator.writeNull();
-		} else {
-			serialize(object, object.getClass(), generator);
-		}
+		if (object == null)
+			return;
+
+		final JsonGeneratorHelper helper;
+		if (generator instanceof JsonGeneratorHelper)
+			helper = (JsonGeneratorHelper) generator;
+		else
+			helper = new JsonGeneratorHelper(generator);
+
+		helper.setNextPropertyName(key);
+		serialize(object, object.getClass(), helper);
+		helper.clearNextPropertyName();
 	}
 
 	@Override
