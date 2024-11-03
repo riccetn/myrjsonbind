@@ -324,8 +324,8 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 		if (parser.currentEvent() == null || parser.currentEvent() == Event.KEY_NAME)
 			parser.next();
 
-		if (parser.currentEvent() == Event.VALUE_NULL)
-			return null;
+//		if (parser.currentEvent() == Event.VALUE_NULL)
+//			return null;
 
 		final JsonbDeserializer<?> deserializer = findDeserializer(type);
 

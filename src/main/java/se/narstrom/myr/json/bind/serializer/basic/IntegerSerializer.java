@@ -16,6 +16,8 @@ public final class IntegerSerializer implements JsonbSerializer<Integer>, JsonbD
 
 	@Override
 	public Integer deserialize(final JsonParser parser, final DeserializationContext ctx, final Type type) {
+		if (parser.currentEvent() == Event.VALUE_NULL)
+			return null;
 		if (parser.currentEvent() != Event.VALUE_NUMBER)
 			throw new JsonbException("Not a number: " + parser.currentEvent());
 		return parser.getInt();
