@@ -32,6 +32,9 @@ import java.util.SimpleTimeZone;
 import java.util.TimeZone;
 import java.util.logging.Logger;
 
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonValue;
 import jakarta.json.bind.Jsonb;
 import jakarta.json.bind.JsonbConfig;
 import jakarta.json.bind.JsonbException;
@@ -49,6 +52,7 @@ import se.narstrom.myr.json.bind.serializer.CollectionSerializer;
 import se.narstrom.myr.json.bind.serializer.DefaultDeserializer;
 import se.narstrom.myr.json.bind.serializer.DefaultSerializer;
 import se.narstrom.myr.json.bind.serializer.EnumSerializer;
+import se.narstrom.myr.json.bind.serializer.JsonpSerializer;
 import se.narstrom.myr.json.bind.serializer.MapSerializer;
 import se.narstrom.myr.json.bind.serializer.basic.BooleanSerializer;
 import se.narstrom.myr.json.bind.serializer.basic.ByteSerializer;
@@ -125,7 +129,13 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 		// 3.11 Collections
 		// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#collections
 		Map.entry(Collection.class, new CollectionSerializer()),
-		Map.entry(Map.class, new MapSerializer())
+		Map.entry(Map.class, new MapSerializer()),
+
+		// 3.20 JSON Processing integration
+		// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#json-processing-integration
+		Map.entry(JsonArray.class, new JsonpSerializer()),
+		Map.entry(JsonObject.class, new JsonpSerializer()),
+		Map.entry(JsonValue.class, new JsonpSerializer())
 	// @formatter:on
 	);
 
@@ -181,7 +191,13 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 		// 3.11 Collections
 		// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#collections
 		Map.entry(Collection.class, new CollectionSerializer()),
-		Map.entry(Map.class, new MapSerializer())
+		Map.entry(Map.class, new MapSerializer()),
+
+		// 3.20 JSON Processing integration
+		// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#json-processing-integration
+		Map.entry(JsonArray.class, new JsonpSerializer()),
+		Map.entry(JsonObject.class, new JsonpSerializer()),
+		Map.entry(JsonValue.class, new JsonpSerializer())
 	// @formatter:on
 	);
 
