@@ -18,15 +18,18 @@ import se.narstrom.myr.json.bind.reflect.ReflectionUilities;
 public final class DefaultDeserializer implements JsonbDeserializer<Object> {
 
 	@Override
-	public Object deserialize(final JsonParser parser, final DeserializationContext ctx, final Type type) {
+	public Object deserialize(final JsonParser parser, final DeserializationContext context, final Type type) {
+		if (parser.currentEvent() == Event.VALUE_NULL)
+			return null;
+
 		final Class<?> clazz = ReflectionUilities.getClass(type);
 
 		assert !clazz.isArray() && !clazz.isPrimitive();
 
 		if (parser.currentEvent() != Event.START_OBJECT)
-			throw new JsonbException("Not an object");
+			throw new JsonbException("Not an object, event: " + parser.currentEvent());
 
-		return deserializeObject(parser, ctx, clazz);
+		return deserializeObject(parser, context, clazz);
 	}
 
 	private Object deserializeObject(final JsonParser parser, final DeserializationContext context, final Class<?> clazz) {

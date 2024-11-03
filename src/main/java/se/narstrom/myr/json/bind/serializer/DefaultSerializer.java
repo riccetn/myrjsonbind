@@ -115,6 +115,9 @@ public final class DefaultSerializer implements JsonbSerializer<Object> {
 				}
 			}
 
+			if (value == null)
+				continue;
+
 			context.serialize(property.name, value, generator);
 		}
 	}
