@@ -89,6 +89,7 @@
 						<include>ee.jakarta.tck.json.bind.defaultmapping.collections.**</include>
 						<include>ee.jakarta.tck.json.bind.defaultmapping.dates.**</include>
 						<include>ee.jakarta.tck.json.bind.defaultmapping.enums.**</include>
+						<include>ee.jakarta.tck.json.bind.defaultmapping.generics.**</include>
 						<include>ee.jakarta.tck.json.bind.defaultmapping.identifiers.**</include>
 						<include>ee.jakarta.tck.json.bind.defaultmapping.ignore.**</include>
 						<include>ee.jakarta.tck.json.bind.defaultmapping.jsonptypes.**</include>

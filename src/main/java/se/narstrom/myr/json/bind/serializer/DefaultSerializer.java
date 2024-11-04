@@ -6,8 +6,10 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import jakarta.json.bind.JsonbException;
 import jakarta.json.bind.serializer.JsonbSerializer;
@@ -23,14 +25,14 @@ public final class DefaultSerializer implements JsonbSerializer<Object> {
 		assert !clazz.isArray() && !clazz.isPrimitive();
 
 		generator.writeStartObject();
-		serializeProperties(object, clazz, generator, context);
+		serializeProperties(object, clazz, generator, context, new HashSet<>());
 		generator.writeEnd();
 	}
 
-	private void serializeProperties(final Object object, final Class<?> clazz, final JsonGenerator generator, final SerializationContext context) {
+	private void serializeProperties(final Object object, final Class<?> clazz, final JsonGenerator generator, final SerializationContext context, final Set<String> seen) {
 		final Class<?> superClazz = clazz.getSuperclass();
 		if (superClazz != null && superClazz != Object.class)
-			serializeProperties(object, superClazz, generator, context);
+			serializeProperties(object, superClazz, generator, context, seen);
 
 		final Map<String, Property> properties = new HashMap<>();
 
@@ -84,6 +86,9 @@ public final class DefaultSerializer implements JsonbSerializer<Object> {
 		sortedProperties.sort(Comparator.comparing(p -> p.name));
 
 		for (final Property property : sortedProperties) {
+			if (seen.contains(property.name))
+				continue;
+
 			if (property.field != null) {
 				final int fieldModifiers = property.field.getModifiers();
 				if (Modifier.isTransient(fieldModifiers) || Modifier.isStatic(fieldModifiers))
@@ -119,6 +124,7 @@ public final class DefaultSerializer implements JsonbSerializer<Object> {
 				continue;
 
 			context.serialize(property.name, value, generator);
+			seen.add(property.name);
 		}
 	}
 
