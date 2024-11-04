@@ -1,4 +1,4 @@
-package se.narstrom.myr.json.bind.serializer;
+package se.narstrom.myr.json.bind.serializer.collections;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.ParameterizedType;
