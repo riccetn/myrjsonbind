@@ -38,8 +38,8 @@ public final class MapSerializer implements JsonbSerializer<Map<String, ?>>, Jso
 		final Type keyType = keyAndValueTypes[0];
 		final Type valueType = keyAndValueTypes[1];
 
-		if (keyType != String.class)
-			throw new JsonbException("Map keys most be String, is " + keyType);
+//		if (keyType  != String.class)
+//			throw new JsonbException("Map keys most be String, is " + keyType);
 
 		if (parser.currentEvent() != Event.START_OBJECT)
 			throw new JsonbException("Not an object");

@@ -428,19 +428,18 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 	}
 
 	private JsonbDeserializer<?> findDeserializer(final Type type, final JsonParser parser) {
-		final Class<?> clazz;
+		Class<?> clazz;
+		try {
+			clazz = ReflectionUilities.getRawType(type);
+		} catch (final ReflectiveOperationException ex) {
+			throw new JsonbException(ex.getMessage(), ex);
+		}
 
-		if (type == Object.class) {
+		if (clazz == Object.class) {
 			// FIXME: Include generic type information with default types
 			clazz = (Class<?>) DEFAULT_TYPES.get(parser.currentEvent());
 			if (clazz == null)
 				throw new JsonbException("Parser in wrong state: " + parser.currentEvent());
-		} else {
-			try {
-				clazz = ReflectionUilities.getRawType(type);
-			} catch (final ReflectiveOperationException ex) {
-				throw new JsonbException(ex.getMessage(), ex);
-			}
 		}
 
 		{

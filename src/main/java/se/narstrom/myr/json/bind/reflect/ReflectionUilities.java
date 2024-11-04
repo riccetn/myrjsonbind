@@ -4,6 +4,7 @@ import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
+import java.lang.reflect.WildcardType;
 
 import jakarta.json.bind.JsonbException;
 
@@ -63,8 +64,24 @@ public final class ReflectionUilities {
 		} else if (type instanceof GenericArrayType genericArray) {
 			// FIXME: Maybe handle multi-dimentional arrays
 			return getRawType(genericArray.getGenericComponentType()).arrayType();
+		} else if (type instanceof TypeVariable<?> variable) {
+			final Type[] upperBounds = variable.getBounds();
+			if (upperBounds.length == 0)
+				return Object.class;
+			else if (upperBounds.length == 1)
+				return getRawType(upperBounds[0]);
+			else
+				throw new ReflectiveOperationException("Multiple upper bounds is not supported");
+		} else if (type instanceof WildcardType wildcard) {
+			final Type[] upperBounds = wildcard.getUpperBounds();
+			if (upperBounds.length == 0)
+				return Object.class;
+			else if (upperBounds.length == 1)
+				return getRawType(upperBounds[0]);
+			else
+				throw new ReflectiveOperationException("Multiple upper bounds is not supported");
 		} else {
-			throw new ReflectiveOperationException("Unsupported type " + type);
+			throw new ReflectiveOperationException("Unsupported type " + type + " (" + type.getClass() + ")");
 		}
 	}
 
