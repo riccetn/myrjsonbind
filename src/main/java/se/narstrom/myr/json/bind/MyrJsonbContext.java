@@ -8,6 +8,8 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
+import java.net.URI;
+import java.net.URL;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -59,6 +61,8 @@ import se.narstrom.myr.json.bind.serializer.DefaultSerializer;
 import se.narstrom.myr.json.bind.serializer.EnumSerializer;
 import se.narstrom.myr.json.bind.serializer.JsonpSerializer;
 import se.narstrom.myr.json.bind.serializer.MapSerializer;
+import se.narstrom.myr.json.bind.serializer.URISerializer;
+import se.narstrom.myr.json.bind.serializer.URLSerializer;
 import se.narstrom.myr.json.bind.serializer.basic.BooleanSerializer;
 import se.narstrom.myr.json.bind.serializer.basic.ByteSerializer;
 import se.narstrom.myr.json.bind.serializer.basic.CharacterSerializer;
@@ -122,6 +126,11 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 		Map.entry(Short.class, new ShortSerializer()),
 		Map.entry(Short.TYPE, new ShortSerializer()),
 		Map.entry(String.class, new StringSerializer()),
+
+		// 3.4.2 java.net.URL, URI
+		// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#java-net-url-uri
+		Map.entry(URI.class, new URISerializer()),
+		Map.entry(URL.class, new URLSerializer()),
 
 		// 3.5 Dates
 		// 3.5.1 java.uril.Data, Calendar, GregorianCalendar
@@ -190,6 +199,11 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 		Map.entry(Short.class, new ShortSerializer()),
 		Map.entry(Short.TYPE, new ShortSerializer()),
 		Map.entry(String.class, new StringSerializer()),
+
+		// 3.4.2 java.net.URL, URI
+		// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#java-net-url-uri
+		Map.entry(URI.class, new URISerializer()),
+		Map.entry(URL.class, new URLSerializer()),
 
 		// 3.5 Dates
 		// 3.5.1 java.uril.Data, Calendar, GregorianCalendar
