@@ -22,7 +22,12 @@ public final class DefaultDeserializer implements JsonbDeserializer<Object> {
 		if (parser.currentEvent() == Event.VALUE_NULL)
 			return null;
 
-		final Class<?> clazz = ReflectionUilities.getClass(type);
+		final Class<?> clazz;
+		try {
+			clazz = ReflectionUilities.getRawType(type);
+		} catch (final ReflectiveOperationException ex) {
+			throw new JsonbException(ex.getMessage(), ex);
+		}
 
 		assert !clazz.isArray() && !clazz.isPrimitive();
 

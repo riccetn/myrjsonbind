@@ -30,7 +30,12 @@ public final class CollectionSerializer implements JsonbSerializer<Collection<?>
 
 	@Override
 	public Collection<?> deserialize(final JsonParser parser, final DeserializationContext ctx, final Type type) {
-		final Class<?> clazz = ReflectionUilities.getClass(type);
+		final Class<?> clazz;
+		try {
+			clazz = ReflectionUilities.getRawType(type);
+		} catch (final ReflectiveOperationException ex) {
+			throw new JsonbException(ex.getMessage(), ex);
+		}
 		final Type elementType = findElementType(type);
 		if (elementType == null)
 			throw new ClassCastException("Not a collection?");

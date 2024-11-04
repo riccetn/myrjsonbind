@@ -436,7 +436,11 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 			if (clazz == null)
 				throw new JsonbException("Parser in wrong state: " + parser.currentEvent());
 		} else {
-			clazz = ReflectionUilities.getClass(type);
+			try {
+				clazz = ReflectionUilities.getRawType(type);
+			} catch (final ReflectiveOperationException ex) {
+				throw new JsonbException(ex.getMessage(), ex);
+			}
 		}
 
 		{
@@ -473,7 +477,12 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 	}
 
 	private JsonbSerializer<?> findSerializer(final Type type) {
-		final Class<?> clazz = ReflectionUilities.getClass(type);
+		final Class<?> clazz;
+		try {
+			clazz = ReflectionUilities.getRawType(type);
+		} catch (ReflectiveOperationException ex) {
+			throw new JsonbException(ex.getMessage(), ex);
+		}
 
 		{
 			final JsonbSerializer<?> candidate = serializers.get(clazz);

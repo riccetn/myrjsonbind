@@ -1,23 +1,13 @@
 package se.narstrom.myr.json.bind.serializer.collections;
 
-import java.awt.List;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Deque;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.NavigableMap;
-import java.util.NavigableSet;
-import java.util.Set;
 import java.util.SortedMap;
-import java.util.SortedSet;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
 import jakarta.json.bind.JsonbException;
 import jakarta.json.bind.serializer.DeserializationContext;
@@ -33,7 +23,12 @@ public final class MapSerializer implements JsonbSerializer<Map<String, ?>>, Jso
 
 	@Override
 	public Map<String, ?> deserialize(final JsonParser parser, final DeserializationContext context, final Type type) {
-		final Class<?> clazz = ReflectionUilities.getClass(type);
+		final Class<?> clazz;
+		try {
+			clazz = ReflectionUilities.getRawType(type);
+		} catch (final ReflectiveOperationException ex) {
+			throw new JsonbException(ex.getMessage(), ex);
+		}
 
 		final Type[] keyAndValueTypes = getKeyAndValueTypes(type);
 		if (keyAndValueTypes == null)

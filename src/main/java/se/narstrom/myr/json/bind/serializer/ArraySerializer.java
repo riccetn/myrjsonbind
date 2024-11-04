@@ -5,6 +5,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
+import jakarta.json.bind.JsonbException;
 import jakarta.json.bind.serializer.DeserializationContext;
 import jakarta.json.bind.serializer.JsonbDeserializer;
 import jakarta.json.bind.serializer.JsonbSerializer;
@@ -33,7 +34,12 @@ public final class ArraySerializer implements JsonbSerializer<Object>, JsonbDese
 
 	@Override
 	public Object deserialize(final JsonParser parser, final DeserializationContext context, final Type type) {
-		final Class<?> clazz = (Class<?>) type;
+		final Class<?> clazz;
+		try {
+			clazz = ReflectionUilities.getRawType(type);
+		} catch (final ReflectiveOperationException ex) {
+			throw new JsonbException(ex.getMessage(), ex);
+		}
 		assert clazz.isArray();
 
 		final Type componentType = ReflectionUilities.getComponentType(type);
