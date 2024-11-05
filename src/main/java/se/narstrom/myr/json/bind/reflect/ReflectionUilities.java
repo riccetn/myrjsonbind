@@ -47,7 +47,7 @@ public final class ReflectionUilities {
 		final TypeVariable<?>[] typeParameters = rawType.getTypeParameters();
 		final Type[] typeArguments = getTypeArguments(type);
 
-		if(typeArguments.length == 0)
+		if (typeArguments.length == 0)
 			return rawType.getInterfaces();
 
 		assert typeParameters.length == typeArguments.length;

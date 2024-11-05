@@ -5,6 +5,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.util.Objects;
 
 import jakarta.json.bind.JsonbException;
@@ -22,24 +23,23 @@ public final class DefaultDeserializer implements JsonbDeserializer<Object> {
 		if (parser.currentEvent() == Event.VALUE_NULL)
 			return null;
 
-		final Class<?> clazz;
+		if (parser.currentEvent() != Event.START_OBJECT)
+			throw new JsonbException("Not an object, event: " + parser.currentEvent());
+
+		return deserializeObject(parser, context, type);
+	}
+
+	private Object deserializeObject(final JsonParser parser, final DeserializationContext context, final Type type) {
+		final Class<?> rawType;
 		try {
-			clazz = ReflectionUilities.getRawType(type);
+			rawType = ReflectionUilities.getRawType(type);
 		} catch (final ReflectiveOperationException ex) {
 			throw new JsonbException(ex.getMessage(), ex);
 		}
 
-		assert !clazz.isArray() && !clazz.isPrimitive();
+		assert !rawType.isArray() && !rawType.isPrimitive();
 
-		if (parser.currentEvent() != Event.START_OBJECT)
-			throw new JsonbException("Not an object, event: " + parser.currentEvent());
-
-		return deserializeObject(parser, context, clazz);
-	}
-
-	private Object deserializeObject(final JsonParser parser, final DeserializationContext context, final Class<?> clazz) {
-
-		final Constructor<?> constructor = findConstructor(clazz);
+		final Constructor<?> constructor = findConstructor(rawType);
 		if (constructor == null)
 			throw new JsonbException("No public or protected no-args constructor");
 
@@ -65,7 +65,7 @@ public final class DefaultDeserializer implements JsonbDeserializer<Object> {
 
 			Field field;
 			try {
-				field = clazz.getDeclaredField(name);
+				field = rawType.getDeclaredField(name);
 			} catch (final NoSuchFieldException ex) {
 				field = null;
 			}
@@ -87,16 +87,16 @@ public final class DefaultDeserializer implements JsonbDeserializer<Object> {
 				}
 			}
 
-			Type propertyType = null;
+			Type unresolvedPropertyType = null;
 			Class<?> propertyClazz = null;
 			if (field != null) {
-				propertyType = field.getGenericType();
+				unresolvedPropertyType = field.getGenericType();
 				propertyClazz = field.getType();
 			}
 
 			final Method setter;
-			if (propertyType != null) {
-				setter = getSetter(clazz, name, propertyClazz);
+			if (unresolvedPropertyType != null) {
+				setter = getSetter(rawType, name, propertyClazz);
 
 				if (setter != null) {
 					if (!Modifier.isPublic(setter.getModifiers())) {
@@ -115,15 +115,15 @@ public final class DefaultDeserializer implements JsonbDeserializer<Object> {
 					}
 				}
 			} else {
-				setter = findSetter(clazz, name);
+				setter = findSetter(rawType, name);
 
 				if (setter != null) {
-					propertyType = setter.getGenericParameterTypes()[0];
+					unresolvedPropertyType = setter.getGenericParameterTypes()[0];
 					propertyClazz = setter.getParameterTypes()[0];
 				}
 			}
 
-			if (propertyType == null) {
+			if (unresolvedPropertyType == null) {
 				skipObject(parser, context);
 				continue;
 			}
@@ -132,6 +132,15 @@ public final class DefaultDeserializer implements JsonbDeserializer<Object> {
 				skipObject(parser, context);
 				continue;
 			}
+
+			final TypeVariable<?>[] typeParameters = rawType.getTypeParameters();
+			final Type[] typeArguments;
+			try {
+				typeArguments = ReflectionUilities.getTypeArguments(type);
+			} catch (final ReflectiveOperationException ex) {
+				throw new JsonbException(ex.getMessage(), ex);
+			}
+			final Type propertyType = ReflectionUilities.resolveTypeParameters(unresolvedPropertyType, typeParameters, typeArguments);
 
 			final Object value = context.deserialize(propertyType, parser);
 
