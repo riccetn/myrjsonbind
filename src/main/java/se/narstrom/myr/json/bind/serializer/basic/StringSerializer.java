@@ -17,7 +17,7 @@ public final class StringSerializer implements JsonbSerializer<String>, JsonbDes
 	@Override
 	public String deserialize(final JsonParser parser, final DeserializationContext ctx, final Type type) {
 		if (parser.currentEvent() != Event.VALUE_STRING)
-			throw new JsonbException("Not a string");
+			throw new JsonbException("Not a string: " + parser.currentEvent());
 		return parser.getString();
 	}
 
