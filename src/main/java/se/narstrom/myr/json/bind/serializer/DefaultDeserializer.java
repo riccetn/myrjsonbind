@@ -5,7 +5,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
 import java.util.Objects;
 
 import jakarta.json.bind.JsonbException;
@@ -30,12 +29,7 @@ public final class DefaultDeserializer implements JsonbDeserializer<Object> {
 	}
 
 	private Object deserializeObject(final JsonParser parser, final DeserializationContext context, final Type type) {
-		final Class<?> rawType;
-		try {
-			rawType = ReflectionUilities.getRawType(type);
-		} catch (final ReflectiveOperationException ex) {
-			throw new JsonbException(ex.getMessage(), ex);
-		}
+		final Class<?> rawType = ReflectionUilities.getRawType(type);
 
 		assert !rawType.isArray() && !rawType.isPrimitive();
 
@@ -133,15 +127,7 @@ public final class DefaultDeserializer implements JsonbDeserializer<Object> {
 				continue;
 			}
 
-			final TypeVariable<?>[] typeParameters = rawType.getTypeParameters();
-			final Type[] typeArguments;
-			try {
-				typeArguments = ReflectionUilities.getTypeArguments(type);
-			} catch (final ReflectiveOperationException ex) {
-				throw new JsonbException(ex.getMessage(), ex);
-			}
-			final Type propertyType = ReflectionUilities.resolveTypeParameters(unresolvedPropertyType, typeParameters, typeArguments);
-
+			final Type propertyType = ReflectionUilities.resolveTypeParameters(unresolvedPropertyType, type);
 			final Object value = context.deserialize(propertyType, parser);
 
 			if (setter != null) {

@@ -4,7 +4,6 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Optional;
 
-import jakarta.json.bind.JsonbException;
 import jakarta.json.bind.serializer.DeserializationContext;
 import jakarta.json.bind.serializer.JsonbDeserializer;
 import jakarta.json.bind.serializer.JsonbSerializer;
@@ -21,12 +20,7 @@ public final class OptionalSerializer implements JsonbSerializer<Optional<?>>, J
 		if (parser.currentEvent() == Event.VALUE_NULL)
 			return Optional.empty();
 
-		final Type optionalType;
-		try {
-			optionalType = ReflectionUilities.getAncestorType(type, Optional.class);
-		} catch (final ReflectiveOperationException ex) {
-			throw new JsonbException(ex.getMessage(), ex);
-		}
+		final Type optionalType = ReflectionUilities.getAncestorType(type, Optional.class);
 
 		if (optionalType instanceof ParameterizedType parameterized) {
 			final Type innerType = parameterized.getActualTypeArguments()[0];

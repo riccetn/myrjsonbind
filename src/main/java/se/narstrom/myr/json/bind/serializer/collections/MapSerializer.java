@@ -23,12 +23,7 @@ public final class MapSerializer implements JsonbSerializer<Map<String, ?>>, Jso
 
 	@Override
 	public Map<String, ?> deserialize(final JsonParser parser, final DeserializationContext context, final Type type) {
-		final Class<?> clazz;
-		try {
-			clazz = ReflectionUilities.getRawType(type);
-		} catch (final ReflectiveOperationException ex) {
-			throw new JsonbException(ex.getMessage(), ex);
-		}
+		final Class<?> clazz = ReflectionUilities.getRawType(type);
 
 		final Type[] keyAndValueTypes = getKeyAndValueTypes(type);
 		if (keyAndValueTypes == null)
@@ -83,12 +78,7 @@ public final class MapSerializer implements JsonbSerializer<Map<String, ?>>, Jso
 	}
 
 	private Type[] getKeyAndValueTypes(final Type type) {
-		final Type genericMap;
-		try {
-			genericMap = ReflectionUilities.getAncestorType(type, Map.class);
-		} catch (final ReflectiveOperationException ex) {
-			throw new JsonbException(ex.getMessage(), ex);
-		}
+		final Type genericMap = ReflectionUilities.getAncestorType(type, Map.class);
 
 		if (genericMap instanceof ParameterizedType parameterized) {
 			return parameterized.getActualTypeArguments();
