@@ -5,6 +5,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
+import java.util.Arrays;
 
 import jakarta.json.bind.JsonbException;
 
@@ -105,8 +106,12 @@ public final class ReflectionUilities {
 	public static Type[] getTypeArguments(final Type type) {
 		if (type instanceof ParameterizedType parameterized) {
 			return parameterized.getActualTypeArguments();
+		} else if (type instanceof Class<?> clazz) {
+			final Type[] arguments = new Type[clazz.getTypeParameters().length];
+			Arrays.fill(arguments, Object.class);
+			return arguments;
 		} else {
-			return new Type[0];
+			throw new JsonbException("Unsupported type: " + type + ", " + type.getClass().getName());
 		}
 	}
 
@@ -115,7 +120,7 @@ public final class ReflectionUilities {
 	}
 
 	public static Type resolveTypeParameters(final Type type, final Type reference) {
-		return resolveTypeParameters(type, getTypeParameters(reference), getTypeArguments(type));
+		return resolveTypeParameters(type, getTypeParameters(reference), getTypeArguments(reference));
 	}
 
 	public static Type resolveTypeParameters(final Type type, final TypeVariable<?>[] parameters, final Type[] arguments) {
@@ -124,7 +129,7 @@ public final class ReflectionUilities {
 
 		} else if (type instanceof GenericArrayType genericArray) {
 			final Type componentType = genericArray.getGenericComponentType();
-			return resolveTypeParameters(componentType, parameters, arguments);
+			return new GenericArrayTypeImpl(resolveTypeParameters(componentType, parameters, arguments));
 
 		} else if (type instanceof ParameterizedType parameterized) {
 			final Type[] typeArguments = parameterized.getActualTypeArguments();
@@ -135,6 +140,14 @@ public final class ReflectionUilities {
 				}
 			}
 			return new ParameterizedTypeImpl(parameterized.getOwnerType(), (Class<?>) parameterized.getRawType(), typeArguments);
+
+		} else if (type instanceof TypeVariable<?> typeVariable) {
+			for (int i = 0; i < parameters.length; ++i) {
+				if (typeVariable == parameters[i])
+					return arguments[i];
+			}
+			return Object.class;
+
 		} else {
 			throw new JsonbException("Unsupported type: " + type + ", " + type.getClass().getName());
 		}
