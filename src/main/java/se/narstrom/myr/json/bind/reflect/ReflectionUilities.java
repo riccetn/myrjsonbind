@@ -5,6 +5,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
+import java.util.Arrays;
 
 import jakarta.json.bind.JsonbException;
 
@@ -45,6 +46,9 @@ public final class ReflectionUilities {
 		final Class<?> rawType = getRawType(type);
 		final TypeVariable<?>[] typeParameters = rawType.getTypeParameters();
 		final Type[] typeArguments = getTypeArguments(type);
+
+		if(typeArguments.length == 0)
+			return rawType.getInterfaces();
 
 		assert typeParameters.length == typeArguments.length;
 
