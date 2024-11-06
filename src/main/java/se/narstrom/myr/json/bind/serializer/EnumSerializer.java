@@ -1,7 +1,5 @@
 package se.narstrom.myr.json.bind.serializer;
 
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 
 import jakarta.json.bind.JsonbException;
@@ -12,6 +10,7 @@ import jakarta.json.bind.serializer.SerializationContext;
 import jakarta.json.stream.JsonGenerator;
 import jakarta.json.stream.JsonParser;
 import jakarta.json.stream.JsonParser.Event;
+import se.narstrom.myr.json.bind.reflect.ReflectionUilities;
 
 // https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#enum
 public final class EnumSerializer implements JsonbSerializer<Enum<?>>, JsonbDeserializer<Enum<?>> {
@@ -19,18 +18,10 @@ public final class EnumSerializer implements JsonbSerializer<Enum<?>>, JsonbDese
 	@Override
 	public Enum<?> deserialize(final JsonParser parser, final DeserializationContext ctx, final Type type) {
 		if (parser.currentEvent() != Event.VALUE_STRING)
-			throw new JsonbException("Not a string");
+			throw new JsonbException("Expected a string found " + parser.currentEvent());
 
-		final Class<?> clazz = (Class<?>) type;
-
-		try {
-			final Method method = clazz.getMethod("valueOf", String.class);
-			assert Modifier.isStatic(method.getModifiers());
-
-			return (Enum<?>) method.invoke(null, parser.getString());
-		} catch (final ReflectiveOperationException ex) {
-			throw new JsonbException(ex.getMessage(), ex);
-		}
+		final Class<?> rawType = ReflectionUilities.getRawType(type);
+		return Enum.valueOf((Class) rawType, parser.getString());
 	}
 
 	@Override
