@@ -5,6 +5,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
+import jakarta.json.bind.JsonbException;
 import jakarta.json.bind.serializer.DeserializationContext;
 import jakarta.json.bind.serializer.JsonbDeserializer;
 import jakarta.json.bind.serializer.JsonbSerializer;
@@ -18,8 +19,8 @@ public final class ArraySerializer implements JsonbSerializer<Object>, JsonbDese
 
 	@Override
 	public void serialize(final Object object, final JsonGenerator generator, final SerializationContext context) {
-		final Class<?> clazz = object.getClass();
-		assert clazz.isArray();
+		if (!object.getClass().isArray())
+			throw new JsonbException("Expected an array, got object of type: " + object.getClass().getTypeName());
 
 		generator.writeStartArray();
 
@@ -33,11 +34,10 @@ public final class ArraySerializer implements JsonbSerializer<Object>, JsonbDese
 
 	@Override
 	public Object deserialize(final JsonParser parser, final DeserializationContext context, final Type type) {
-		final Class<?> clazz = ReflectionUilities.getRawType(type);
-		assert clazz.isArray();
+		if (!ReflectionUilities.getRawType(type).isArray())
+			throw new JsonbException("Expected an array, got type: " + type.getTypeName());
 
 		final Type componentType = ReflectionUilities.getComponentType(type);
-		final Class<?> componentClazz = clazz.getComponentType();
 		final List<Object> elements = new ArrayList<>();
 
 		while (parser.next() != Event.END_ARRAY) {
@@ -45,7 +45,8 @@ public final class ArraySerializer implements JsonbSerializer<Object>, JsonbDese
 			elements.add(elem);
 		}
 
-		final Object array = Array.newInstance(componentClazz, elements.size());
+		// Calling List.toArray() dose not work for primitive component types
+		final Object array = Array.newInstance(ReflectionUilities.getRawType(componentType), elements.size());
 
 		int index = 0;
 		for (final Object element : elements) {
