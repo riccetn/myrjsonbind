@@ -55,7 +55,7 @@ public final class ReflectionUilities {
 		final Type[] interfaces = rawType.getGenericInterfaces();
 
 		for (int i = 0; i < interfaces.length; ++i)
-			interfaces[i] = resolveTypeParameters(interfaces[i], typeParameters, typeArguments);
+			interfaces[i] = resolveType(interfaces[i], typeParameters, typeArguments);
 
 		return interfaces;
 	}
@@ -100,7 +100,7 @@ public final class ReflectionUilities {
 
 		assert typeParameters.length == typeArguments.length;
 
-		return resolveTypeParameters(superType, typeParameters, typeArguments);
+		return resolveType(superType, typeParameters, typeArguments);
 	}
 
 	public static Type[] getTypeArguments(final Type type) {
@@ -119,17 +119,17 @@ public final class ReflectionUilities {
 		return getRawType(type).getTypeParameters();
 	}
 
-	public static Type resolveTypeParameters(final Type type, final Type reference) {
-		return resolveTypeParameters(type, getTypeParameters(reference), getTypeArguments(reference));
+	public static Type resolveType(final Type type, final Type reference) {
+		return resolveType(type, getTypeParameters(reference), getTypeArguments(reference));
 	}
 
-	public static Type resolveTypeParameters(final Type type, final TypeVariable<?>[] parameters, final Type[] arguments) {
+	public static Type resolveType(final Type type, final TypeVariable<?>[] parameters, final Type[] arguments) {
 		if (type instanceof Class<?>) {
 			return type;
 
 		} else if (type instanceof GenericArrayType genericArray) {
 			final Type componentType = genericArray.getGenericComponentType();
-			return new GenericArrayTypeImpl(resolveTypeParameters(componentType, parameters, arguments));
+			return new GenericArrayTypeImpl(resolveType(componentType, parameters, arguments));
 
 		} else if (type instanceof ParameterizedType parameterized) {
 			final Type[] typeArguments = parameterized.getActualTypeArguments();
@@ -147,6 +147,15 @@ public final class ReflectionUilities {
 					return arguments[i];
 			}
 			return Object.class;
+
+		} else if (type instanceof WildcardType wildcard) {
+			final Type[] bounds = wildcard.getUpperBounds();
+			if (bounds.length == 0)
+				return Object.class;
+			else if (bounds.length == 1)
+				return bounds[0];
+			else
+				throw new JsonbException("Multiple bounds not supported yet");
 
 		} else {
 			throw new JsonbException("Unsupported type: " + type + ", " + type.getClass().getName());

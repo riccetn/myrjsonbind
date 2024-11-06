@@ -387,11 +387,20 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 		if (parser.currentEvent() == null || parser.currentEvent() == Event.KEY_NAME)
 			parser.next();
 
-		final JsonbDeserializer<?> deserializer = findDeserializer(type, parser);
+		final Type actualType;
+		if (type == Object.class) {
+			actualType = DEFAULT_TYPES.get(parser.currentEvent());
+			if (actualType == null)
+				throw new JsonbException("Parser in wrong state: " + parser.currentEvent());
+		} else {
+			actualType = type;
+		}
 
-		LOG.fine(() -> String.format("Deserializing %s with %s", type, deserializer.getClass().getName()));
+		final JsonbDeserializer<?> deserializer = findDeserializer(actualType, parser);
 
-		return (T) deserializer.deserialize(parser, this, type);
+		LOG.fine(() -> String.format("Deserializing %s with %s", actualType, deserializer.getClass().getName()));
+
+		return (T) deserializer.deserialize(parser, this, actualType);
 	}
 
 	@Override
@@ -429,13 +438,6 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 
 	private JsonbDeserializer<?> findDeserializer(final Type type, final JsonParser parser) {
 		Class<?> clazz = ReflectionUilities.getRawType(type);
-
-		if (clazz == Object.class) {
-			// FIXME: Include generic type information with default types
-			clazz = (Class<?>) DEFAULT_TYPES.get(parser.currentEvent());
-			if (clazz == null)
-				throw new JsonbException("Parser in wrong state: " + parser.currentEvent());
-		}
 
 		{
 			final JsonbDeserializer<?> candidate = deserializers.get(clazz);

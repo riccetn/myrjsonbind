@@ -81,7 +81,7 @@ public final class CollectionSerializer implements JsonbSerializer<Collection<?>
 		final Type genericCollection = ReflectionUilities.getAncestorType(type, Collection.class);
 
 		if (genericCollection instanceof ParameterizedType parameterized) {
-			return parameterized.getActualTypeArguments()[0];
+			return ReflectionUilities.resolveType(parameterized.getActualTypeArguments()[0], type);
 		} else {
 			return Object.class;
 		}

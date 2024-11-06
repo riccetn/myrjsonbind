@@ -127,7 +127,7 @@ public final class DefaultDeserializer implements JsonbDeserializer<Object> {
 				continue;
 			}
 
-			final Type propertyType = ReflectionUilities.resolveTypeParameters(unresolvedPropertyType, type);
+			final Type propertyType = ReflectionUilities.resolveType(unresolvedPropertyType, type);
 			final Object value = context.deserialize(propertyType, parser);
 
 			if (setter != null) {
