@@ -102,9 +102,12 @@ public final class DefaultSerializer implements JsonbSerializer<Object> {
 					continue;
 
 				try {
+					property.getter.setAccessible(true);
 					value = property.getter.invoke(object);
 				} catch (final ReflectiveOperationException ex) {
 					throw new JsonbException(ex.getMessage(), ex);
+				} finally {
+					property.getter.setAccessible(false);
 				}
 			} else {
 				if (!Modifier.isPublic(property.field.getModifiers()))
