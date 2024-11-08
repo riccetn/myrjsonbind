@@ -1,11 +1,9 @@
 package se.narstrom.myr.json.bind.serializer;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
-import java.util.Objects;
+import java.util.Map;
 
 import jakarta.json.bind.JsonbException;
 import jakarta.json.bind.serializer.DeserializationContext;
@@ -13,6 +11,8 @@ import jakarta.json.bind.serializer.JsonbDeserializer;
 import jakarta.json.stream.JsonParser;
 import jakarta.json.stream.JsonParser.Event;
 import se.narstrom.myr.json.bind.MyrJsonbContext;
+import se.narstrom.myr.json.bind.reflect.Properties;
+import se.narstrom.myr.json.bind.reflect.Property;
 import se.narstrom.myr.json.bind.reflect.ReflectionUilities;
 
 public final class DefaultDeserializer implements JsonbDeserializer<Object> {
@@ -47,107 +47,22 @@ public final class DefaultDeserializer implements JsonbDeserializer<Object> {
 			constructor.setAccessible(false);
 		}
 
+		final Map<String, Property> properties = Properties.getProperties(type);
+
 		Event event;
 		while ((event = parser.next()) != Event.END_OBJECT) {
 			assert event == Event.KEY_NAME;
 			final String name = parser.getString();
 
-			if (name.isEmpty()) {
+			final Property property = properties.get(name);
+
+			if (property == null) {
 				skipObject(parser, context);
 				continue;
 			}
 
-			Field field;
-			try {
-				field = rawType.getDeclaredField(name);
-			} catch (final NoSuchFieldException ex) {
-				field = null;
-			}
-
-			if (field != null) {
-				if (Modifier.isStatic(field.getModifiers())) {
-					skipObject(parser, context);
-					continue;
-				}
-
-				if (Modifier.isFinal(field.getModifiers())) {
-					skipObject(parser, context);
-					continue;
-				}
-
-				if (Modifier.isTransient(field.getModifiers())) {
-					skipObject(parser, context);
-					continue;
-				}
-			}
-
-			Type unresolvedPropertyType = null;
-			Class<?> propertyClazz = null;
-			if (field != null) {
-				unresolvedPropertyType = field.getGenericType();
-				propertyClazz = field.getType();
-			}
-
-			final Method setter;
-			if (unresolvedPropertyType != null) {
-				setter = getSetter(rawType, name, propertyClazz);
-
-				if (setter != null) {
-					if (!Modifier.isPublic(setter.getModifiers())) {
-						skipObject(parser, context);
-						continue;
-					}
-
-					if (Modifier.isStatic(setter.getModifiers())) {
-						skipObject(parser, context);
-						continue;
-					}
-
-					if (setter.isBridge()) {
-						skipObject(parser, context);
-						continue;
-					}
-				}
-			} else {
-				setter = findSetter(rawType, name);
-
-				if (setter != null) {
-					unresolvedPropertyType = setter.getGenericParameterTypes()[0];
-					propertyClazz = setter.getParameterTypes()[0];
-				}
-			}
-
-			if (unresolvedPropertyType == null) {
-				skipObject(parser, context);
-				continue;
-			}
-
-			if (setter == null && !Modifier.isPublic(field.getModifiers())) {
-				skipObject(parser, context);
-				continue;
-			}
-
-			final Type propertyType = ReflectionUilities.resolveType(unresolvedPropertyType, type);
-			final Object value = context.deserialize(propertyType, parser);
-
-			if (setter != null) {
-				try {
-					setter.invoke(instance, value);
-				} catch (final ReflectiveOperationException ex) {
-					throw new JsonbException(ex.getMessage(), ex);
-				}
-			} else {
-				assert field != null;
-
-				try {
-					field.setAccessible(true);
-					field.set(instance, value);
-				} catch (final ReflectiveOperationException ex) {
-					throw new JsonbException(ex.getMessage(), ex);
-				} finally {
-					field.setAccessible(false);
-				}
-			}
+			final Object value = context.deserialize(property.type(), parser);
+			property.setValue(instance, value);
 		}
 
 		return instance;
@@ -171,56 +86,6 @@ public final class DefaultDeserializer implements JsonbDeserializer<Object> {
 
 			return constructor;
 		}
-		return null;
-	}
-
-	private Method getSetter(final Class<?> clazz, final String name, final Class<?> propertyClazz) {
-		final int firstCodePoint = name.codePointAt(0);
-		final String setterName;
-
-		if (firstCodePoint > 0xFFFF)
-			setterName = "set" + Character.toString(Character.toUpperCase(firstCodePoint)) + name.substring(2);
-		else
-			setterName = "set" + Character.toString(Character.toUpperCase(firstCodePoint)) + name.substring(1);
-
-		try {
-			return clazz.getDeclaredMethod(setterName, propertyClazz);
-		} catch (final NoSuchMethodException ex) {
-			return null;
-		}
-	}
-
-	private Method findSetter(final Class<?> clazz, final String name) {
-		final int firstCodePoint = name.codePointAt(0);
-		final String setterName;
-
-		if (firstCodePoint > 0xFFFF)
-			setterName = "set" + Character.toString(Character.toUpperCase(firstCodePoint)) + name.substring(2);
-		else
-			setterName = "set" + Character.toString(Character.toUpperCase(firstCodePoint)) + name.substring(1);
-
-		for (Class<?> currentClazz = clazz; currentClazz != null && currentClazz != Object.class; currentClazz = currentClazz.getSuperclass()) {
-			for (final Method method : currentClazz.getMethods()) {
-
-				if (!Modifier.isPublic(method.getModifiers()))
-					continue;
-
-				if (Modifier.isStatic(method.getModifiers()))
-					continue;
-
-				if (method.isBridge())
-					continue;
-
-				if (method.getParameterCount() != 1)
-					continue;
-
-				if (!Objects.equals(method.getName(), setterName))
-					continue;
-
-				return method;
-			}
-		}
-
 		return null;
 	}
 }
