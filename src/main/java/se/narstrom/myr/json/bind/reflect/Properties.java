@@ -53,7 +53,7 @@ public final class Properties {
 
 			final int fieldModifiers = field.getModifiers();
 			if (Modifier.isStatic(fieldModifiers) || Modifier.isTransient(fieldModifiers)) {
-				blacklist.add(field.getName());
+				blacklist.add(name);
 				continue;
 			}
 
