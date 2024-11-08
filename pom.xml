@@ -96,7 +96,7 @@
 						<include>ee.jakarta.tck.json.bind.defaultmapping.nullvalue.**</include>
 						<!-- <include>ee.jakarta.tck.json.bind.defaultmapping.polymorphictypes.**</include> -->
 						<include>ee.jakarta.tck.json.bind.defaultmapping.specifictypes.**</include>
-						<!-- <include>ee.jakarta.tck.json.bind.defaultmapping.uniqueness.**</include> -->
+						<include>ee.jakarta.tck.json.bind.defaultmapping.uniqueness.**</include>
 						<include>ee.jakarta.tck.json.bind.defaultmapping.untyped.**</include>
 					</includes>
 				</configuration>

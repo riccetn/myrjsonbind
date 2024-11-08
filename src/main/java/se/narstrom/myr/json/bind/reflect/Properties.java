@@ -12,6 +12,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import jakarta.json.bind.JsonbException;
+import jakarta.json.bind.annotation.JsonbProperty;
 
 public final class Properties {
 
@@ -36,9 +37,19 @@ public final class Properties {
 			if (field.isSynthetic())
 				continue;
 
-			final String name = field.getName();
+			final JsonbProperty propertyAnnotation = field.getAnnotation(JsonbProperty.class);
+
+			final String name;
+			if (propertyAnnotation != null && !propertyAnnotation.value().isEmpty())
+				name = propertyAnnotation.value();
+			else
+				name = field.getName();
+
 			if (blacklist.contains(name))
 				continue;
+
+			if (localProperties.containsKey(name))
+				throw new JsonbException("Duplicate property name");
 
 			final int fieldModifiers = field.getModifiers();
 			if (Modifier.isStatic(fieldModifiers) || Modifier.isTransient(fieldModifiers)) {
