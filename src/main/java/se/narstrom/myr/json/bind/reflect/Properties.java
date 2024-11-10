@@ -90,13 +90,13 @@ public final class Properties {
 			propertyName = fieldAnnotation.value();
 
 		if (getterAnnotation != null) {
-			if (propertyName != null && Objects.equals(propertyName, getterAnnotation.value()))
+			if (propertyName != null && !Objects.equals(propertyName, getterAnnotation.value()))
 				throw new JsonbException("Conflicting annotations for property " + name);
 			propertyName = getterAnnotation.value();
 		}
 
 		if (setterAnnotation != null) {
-			if (propertyName != null && Objects.equals(propertyName, setterAnnotation.value()))
+			if (propertyName != null && !Objects.equals(propertyName, setterAnnotation.value()))
 				throw new JsonbException("Conflicting annotations for property " + name);
 			propertyName = setterAnnotation.value();
 		}
