@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.SequencedMap;
 import java.util.Set;
 import java.util.SortedMap;
@@ -79,6 +80,44 @@ public final class Properties {
 		return Character.toString(Character.toLowerCase(firstCodePoint)) + rest;
 	}
 
+	private static String getPropertyName(final String name, final Field field, final Method getter, final Method setter) {
+		final JsonbProperty fieldAnnotation = (field != null) ? field.getAnnotation(JsonbProperty.class) : null;
+		final JsonbProperty getterAnnotation = (getter != null) ? getter.getAnnotation(JsonbProperty.class) : null;
+		final JsonbProperty setterAnnotation = (setter != null) ? setter.getAnnotation(JsonbProperty.class) : null;
+
+		String propertyName = null;
+		if (fieldAnnotation != null)
+			propertyName = fieldAnnotation.value();
+
+		if (getterAnnotation != null) {
+			if (propertyName != null && Objects.equals(propertyName, getterAnnotation.value()))
+				throw new JsonbException("Conflicting annotations for property " + name);
+			propertyName = getterAnnotation.value();
+		}
+
+		if (setterAnnotation != null) {
+			if (propertyName != null && Objects.equals(propertyName, setterAnnotation.value()))
+				throw new JsonbException("Conflicting annotations for property " + name);
+			propertyName = setterAnnotation.value();
+		}
+
+		if (propertyName == null)
+			return name;
+
+		return propertyName;
+	}
+
+	private static Type getUnresolvedPropertyType(final Field field, final Method getter, final Method setter) {
+		if (field != null)
+			return field.getGenericType();
+		else if (getter != null)
+			return getter.getGenericReturnType();
+		else if (setter != null)
+			return setter.getGenericParameterTypes()[0];
+		else
+			throw new AssertionError("Unreachable");
+	}
+
 	public static SequencedMap<String, Property> getProperties(final Type beanType) {
 		final Class<?> rawType = ReflectionUilities.getRawType(beanType);
 
@@ -100,17 +139,18 @@ public final class Properties {
 		final Map<String, Method> setters = new HashMap<>();
 		listGettersAndSetters(rawType, getters, setters);
 
-		for (final Field field : fields.values()) {
+		final Set<String> names = new HashSet<>();
+		names.addAll(fields.keySet());
+		names.addAll(getters.keySet());
+		names.addAll(setters.keySet());
 
-			final String fieldName = field.getName();
+		for (final String fieldName : names) {
 
-			final JsonbProperty propertyAnnotation = field.getAnnotation(JsonbProperty.class);
+			final Field field = fields.get(fieldName);
+			final Method getter = getters.get(fieldName);
+			final Method setter = setters.get(fieldName);
 
-			final String propertyName;
-			if (propertyAnnotation != null && !propertyAnnotation.value().isEmpty())
-				propertyName = propertyAnnotation.value();
-			else
-				propertyName = fieldName;
+			final String propertyName = getPropertyName(fieldName, field, getter, setter);
 
 			if (blacklist.contains(propertyName))
 				continue;
@@ -118,17 +158,32 @@ public final class Properties {
 			if (localProperties.containsKey(propertyName))
 				throw new JsonbException("Duplicate property name");
 
-			final int fieldModifiers = field.getModifiers();
-			if (Modifier.isStatic(fieldModifiers) || Modifier.isTransient(fieldModifiers)) {
-				blacklist.add(propertyName);
-				continue;
+			if (field != null) {
+				final int fieldModifiers = field.getModifiers();
+				if (Modifier.isStatic(fieldModifiers) || Modifier.isTransient(fieldModifiers)) {
+					blacklist.add(propertyName);
+					continue;
+				}
 			}
 
-			final Type unresolvedPropertyType = field.getGenericType();
-			final Type propertyType = ReflectionUilities.resolveType(unresolvedPropertyType, beanType);
+			if (getter != null) {
+				final int modifiers = getter.getModifiers();
+				if (Modifier.isStatic(modifiers)) {
+					blacklist.add(propertyName);
+					continue;
+				}
+			}
 
-			final Method getter = getters.remove(fieldName);
-			final Method setter = setters.remove(fieldName);
+			if (setter != null) {
+				final int modifiers = setter.getModifiers();
+				if (Modifier.isStatic(modifiers)) {
+					blacklist.add(propertyName);
+					continue;
+				}
+			}
+
+			final Type unresolvedPropertyType = getUnresolvedPropertyType(field, getter, setter);
+			final Type propertyType = ReflectionUilities.resolveType(unresolvedPropertyType, beanType);
 
 			if (getter != null || setter != null) {
 				final boolean publicGetter = getter != null && Modifier.isPublic(getter.getModifiers());
@@ -141,38 +196,15 @@ public final class Properties {
 
 				localProperties.put(propertyName, new Property(propertyType, propertyName, null, getter, setter));
 			} else {
-				if (!Modifier.isPublic(fieldModifiers)) {
+				assert field != null;
+
+				if (!Modifier.isPublic(field.getModifiers())) {
 					blacklist.add(propertyName);
 					continue;
 				}
 
 				localProperties.put(propertyName, new Property(propertyType, propertyName, field, null, null));
 			}
-		}
-
-		for (final Method getter : getters.values()) {
-
-			final int modifiers = getter.getModifiers();
-			if (!Modifier.isPublic(modifiers) || Modifier.isStatic(modifiers))
-				continue;
-
-			final String methodName = getter.getName();
-			if (!methodName.startsWith("get") && !methodName.startsWith("set"))
-				continue;
-
-			final int firstCodePoint = methodName.codePointAt(3);
-			final String remainingName = (firstCodePoint > 0xFFFF) ? methodName.substring(5) : methodName.substring(4);
-			final String name = Character.toString(Character.toLowerCase(firstCodePoint)) + remainingName;
-
-			if (blacklist.contains(name) || localProperties.containsKey(name))
-				continue;
-
-			final Type unresolvedPropertyType = getter.getGenericReturnType();
-			final Method setter = setters.remove(name);
-
-			final Type propertyType = ReflectionUilities.resolveType(unresolvedPropertyType, beanType);
-
-			localProperties.put(name, new Property(propertyType, name, null, getter, setter));
 		}
 
 		final SequencedMap<String, Property> properties = new LinkedHashMap<>();
