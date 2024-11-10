@@ -288,6 +288,10 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 		return config;
 	}
 
+	public JsonProvider getJsonpProvider() {
+		return jsonp;
+	}
+
 	@Override
 	public <T> T fromJson(final InputStream stream, final Class<T> type) throws JsonbException {
 		try (final JsonParser parser = jsonp.createParser(stream)) {
@@ -405,18 +409,12 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 
 	@Override
 	public <T> void serialize(final String key, final T object, final JsonGenerator generator) {
-		if (object == null)
-			return;
-
-		final JsonGeneratorHelper helper;
-		if (generator instanceof JsonGeneratorHelper)
-			helper = (JsonGeneratorHelper) generator;
-		else
-			helper = new JsonGeneratorHelper(generator);
-
-		helper.setNextPropertyName(key);
-		serialize(object, object.getClass(), helper);
-		helper.clearNextPropertyName();
+		if (object == null) {
+			generator.writeNull(key);
+		} else {
+			generator.writeKey(key);
+			serialize(object, object.getClass(), generator);
+		}
 	}
 
 	@Override
