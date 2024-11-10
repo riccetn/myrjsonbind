@@ -100,7 +100,7 @@ public final class Properties {
 		final Map<String, Method> setters = new HashMap<>();
 		listGettersAndSetters(rawType, getters, setters);
 
-		for (final Field field : rawType.getDeclaredFields()) {
+		for (final Field field : fields.values()) {
 
 			final String fieldName = field.getName();
 
