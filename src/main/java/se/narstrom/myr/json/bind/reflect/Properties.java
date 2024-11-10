@@ -4,17 +4,80 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.SequencedMap;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import jakarta.json.bind.JsonbException;
 import jakarta.json.bind.annotation.JsonbProperty;
 
 public final class Properties {
+
+	private static Map<String, Field> listFields(final Class<?> rawBeanType) {
+		// @formatter:off
+		return Stream.of(rawBeanType.getDeclaredFields())
+				.filter(field -> !field.isSynthetic())
+				.collect(Collectors.toUnmodifiableMap(Field::getName, Function.identity()));
+		// @formatter:on
+	}
+
+	private static void listGettersAndSetters(final Class<?> rawBeanType, final Map<String, Method> getters, final Map<String, Method> setters) {
+		for (final Method method : rawBeanType.getDeclaredMethods()) {
+			if (isGetter(method)) {
+				final String name = beanPropertyNameFromMethodName(method.getName());
+				final Method oldMethod;
+				if ((oldMethod = getters.putIfAbsent(name, method)) != null)
+					throw new JsonbException("Multiple getters with the same name " + oldMethod + " vs " + method);
+			} else if (isSetter(method)) {
+				final String name = beanPropertyNameFromMethodName(method.getName());
+				final Method oldMethod;
+				if ((oldMethod = setters.putIfAbsent(name, method)) != null)
+					throw new JsonbException("Multiple setters with the same name " + oldMethod + " vs " + method);
+			}
+		}
+	}
+
+	private static boolean isGetter(final Method method) {
+		// @formatter:off
+		return ((method.getName().startsWith("get") && Character.isUpperCase(method.getName().codePointAt(3))) ||
+					(method.getName().startsWith("is") && Character.isUpperCase(method.getName().codePointAt(2)))) &&
+				!method.isSynthetic() && !method.isBridge() &&
+				method.getParameterCount() == 0 &&
+				method.getReturnType() != Void.TYPE;
+		// @formatter:on
+	}
+
+	private static boolean isSetter(final Method method) {
+		// @formatter:off
+		return method.getName().startsWith("set") &&
+				Character.isUpperCase(method.getName().codePointAt(3)) &&
+				!method.isSynthetic() && !method.isBridge() &&
+				method.getParameterCount() == 1;
+		// @formatter:on
+	}
+
+	private static String beanPropertyNameFromMethodName(final String methodName) {
+		final int prefixLength;
+		if (methodName.startsWith("get") || methodName.startsWith("set"))
+			prefixLength = 3;
+		else {
+			assert methodName.startsWith("is");
+			prefixLength = 2;
+		}
+
+		final int firstCodePoint = methodName.codePointAt(prefixLength);
+		final String rest = (firstCodePoint > 0xFFFF) ? methodName.substring(prefixLength + 2) : methodName.substring(prefixLength + 1);
+
+		return Character.toString(Character.toLowerCase(firstCodePoint)) + rest;
+	}
 
 	public static SequencedMap<String, Property> getProperties(final Type beanType) {
 		final Class<?> rawType = ReflectionUilities.getRawType(beanType);
@@ -32,67 +95,68 @@ public final class Properties {
 
 		final SortedMap<String, Property> localProperties = new TreeMap<>();
 
+		final Map<String, Field> fields = listFields(rawType);
+		final Map<String, Method> getters = new HashMap<>();
+		final Map<String, Method> setters = new HashMap<>();
+		listGettersAndSetters(rawType, getters, setters);
+
 		for (final Field field : rawType.getDeclaredFields()) {
 
-			if (field.isSynthetic())
-				continue;
+			final String fieldName = field.getName();
 
 			final JsonbProperty propertyAnnotation = field.getAnnotation(JsonbProperty.class);
 
-			final String name;
+			final String propertyName;
 			if (propertyAnnotation != null && !propertyAnnotation.value().isEmpty())
-				name = propertyAnnotation.value();
+				propertyName = propertyAnnotation.value();
 			else
-				name = field.getName();
+				propertyName = fieldName;
 
-			if (blacklist.contains(name))
+			if (blacklist.contains(propertyName))
 				continue;
 
-			if (localProperties.containsKey(name))
+			if (localProperties.containsKey(propertyName))
 				throw new JsonbException("Duplicate property name");
 
 			final int fieldModifiers = field.getModifiers();
 			if (Modifier.isStatic(fieldModifiers) || Modifier.isTransient(fieldModifiers)) {
-				blacklist.add(name);
+				blacklist.add(propertyName);
 				continue;
 			}
 
 			final Type unresolvedPropertyType = field.getGenericType();
 			final Type propertyType = ReflectionUilities.resolveType(unresolvedPropertyType, beanType);
 
-			final Method getter = getGetter(rawType, name, unresolvedPropertyType);
-			final Method setter = getSetter(rawType, name, unresolvedPropertyType);
+			final Method getter = getters.remove(fieldName);
+			final Method setter = setters.remove(fieldName);
 
 			if (getter != null || setter != null) {
 				final boolean publicGetter = getter != null && Modifier.isPublic(getter.getModifiers());
 				final boolean publicSetter = setter != null && Modifier.isPublic(setter.getModifiers());
 
 				if (!publicGetter && !publicSetter) {
-					blacklist.add(name);
+					blacklist.add(propertyName);
 					continue;
 				}
 
-				localProperties.put(name, new Property(propertyType, name, null, getter, setter));
+				localProperties.put(propertyName, new Property(propertyType, propertyName, null, getter, setter));
 			} else {
 				if (!Modifier.isPublic(fieldModifiers)) {
-					blacklist.add(name);
+					blacklist.add(propertyName);
 					continue;
 				}
 
-				localProperties.put(name, new Property(propertyType, name, field, null, null));
+				localProperties.put(propertyName, new Property(propertyType, propertyName, field, null, null));
 			}
 		}
 
-		for (final Method method : rawType.getDeclaredMethods()) {
+		for (final Method getter : getters.values()) {
 
-			if (method.isBridge() || method.isSynthetic())
-				continue;
-
-			final int modifiers = method.getModifiers();
+			final int modifiers = getter.getModifiers();
 			if (!Modifier.isPublic(modifiers) || Modifier.isStatic(modifiers))
 				continue;
 
-			final String methodName = method.getName();
+			final String methodName = getter.getName();
 			if (!methodName.startsWith("get") && !methodName.startsWith("set"))
 				continue;
 
@@ -103,27 +167,8 @@ public final class Properties {
 			if (blacklist.contains(name) || localProperties.containsKey(name))
 				continue;
 
-			final Type unresolvedPropertyType;
-			final Method getter;
-			final Method setter;
-
-			if (methodName.startsWith("get")) {
-				if (method.getParameterCount() != 0)
-					continue;
-
-				unresolvedPropertyType = method.getGenericReturnType();
-				getter = method;
-				setter = getSetter(rawType, name, unresolvedPropertyType);
-			} else {
-				assert methodName.startsWith("set");
-
-				if (method.getParameterCount() != 1)
-					continue;
-
-				unresolvedPropertyType = method.getGenericParameterTypes()[0];
-				getter = getGetter(rawType, name, unresolvedPropertyType);
-				setter = method;
-			}
+			final Type unresolvedPropertyType = getter.getGenericReturnType();
+			final Method setter = setters.remove(name);
 
 			final Type propertyType = ReflectionUilities.resolveType(unresolvedPropertyType, beanType);
 
@@ -135,44 +180,5 @@ public final class Properties {
 		properties.putAll(localProperties);
 
 		return properties;
-	}
-
-	private static Method getGetter(final Class<?> rawType, final String propertyName, final Type propertyType) {
-		final int firstCodePoint = propertyName.codePointAt(0);
-		final String remainingName = (firstCodePoint > 0xFFFF) ? propertyName.substring(2) : propertyName.substring(1);
-		final String getterName = "get" + Character.toString(Character.toUpperCase(firstCodePoint)) + remainingName;
-
-		final Method candidate = getMethod(rawType, getterName);
-
-		if (candidate == null || !candidate.getGenericReturnType().equals(propertyType))
-			return null;
-
-		return candidate;
-	}
-
-	private static Method getSetter(final Class<?> rawType, final String propertyName, final Type propertyType) {
-		final int firstCodePoint = propertyName.codePointAt(0);
-		final String remainingName = (firstCodePoint > 0xFFFF) ? propertyName.substring(2) : propertyName.substring(1);
-		final String getterName = "set" + Character.toString(Character.toUpperCase(firstCodePoint)) + remainingName;
-
-		return getMethod(rawType, getterName, propertyType);
-	}
-
-	private static Method getMethod(final Class<?> rawType, final String methodName, final Type... parameters) {
-		try {
-			final Class<?>[] rawParameters = new Class[parameters.length];
-			for (int i = 0; i < parameters.length; ++i)
-				rawParameters[i] = ReflectionUilities.getRawType(parameters[i]);
-
-			final Method method = rawType.getDeclaredMethod(methodName, rawParameters);
-
-			if (method.isBridge() || method.isSynthetic())
-				return null;
-
-			return method;
-
-		} catch (final NoSuchMethodException ex) {
-			return null;
-		}
 	}
 }
