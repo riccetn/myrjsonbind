@@ -29,6 +29,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -46,6 +47,7 @@ import jakarta.json.JsonValue;
 import jakarta.json.bind.Jsonb;
 import jakarta.json.bind.JsonbConfig;
 import jakarta.json.bind.JsonbException;
+import jakarta.json.bind.adapter.JsonbAdapter;
 import jakarta.json.bind.serializer.DeserializationContext;
 import jakarta.json.bind.serializer.JsonbDeserializer;
 import jakarta.json.bind.serializer.JsonbSerializer;
@@ -55,6 +57,7 @@ import jakarta.json.stream.JsonGenerator;
 import jakarta.json.stream.JsonParser;
 import jakarta.json.stream.JsonParser.Event;
 import se.narstrom.myr.json.bind.reflect.ReflectionUilities;
+import se.narstrom.myr.json.bind.serializer.AdapterSerializer;
 import se.narstrom.myr.json.bind.serializer.ArraySerializer;
 import se.narstrom.myr.json.bind.serializer.BigDecimalSerializer;
 import se.narstrom.myr.json.bind.serializer.BigIntegerSerializer;
@@ -107,162 +110,159 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 	private final JsonbConfig config;
 	private final JsonProvider jsonp;
 
-	private Map<Class<?>, JsonbSerializer<?>> serializers = Map.ofEntries(
-	// @formatter:off
+	private Map<Class<?>, JsonbSerializer<?>> serializers = new HashMap<>();
+	private Map<Class<?>, JsonbDeserializer<?>> deserializers = new HashMap<>();
+
+	{
 		// 3.3 Basic Java Types
 		// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#basic-java-types
-		Map.entry(Boolean.class, new BooleanSerializer()),
-		Map.entry(Boolean.TYPE, new BooleanSerializer()),
-		Map.entry(Byte.class, new ByteSerializer()),
-		Map.entry(Byte.TYPE, new ByteSerializer()),
-		Map.entry(Character.class, new CharacterSerializer()),
-		Map.entry(Character.TYPE, new CharacterSerializer()),
-		Map.entry(Double.class, new DoubleSerializer()),
-		Map.entry(Double.TYPE, new DoubleSerializer()),
-		Map.entry(Float.class, new FloatSerializer()),
-		Map.entry(Float.TYPE, new FloatSerializer()),
-		Map.entry(Integer.class, new IntegerSerializer()),
-		Map.entry(Integer.TYPE, new IntegerSerializer()),
-		Map.entry(Long.class, new LongSerializer()),
-		Map.entry(Long.TYPE, new LongSerializer()),
-		Map.entry(Number.class, new NumberSerializer()),
-		Map.entry(Short.class, new ShortSerializer()),
-		Map.entry(Short.TYPE, new ShortSerializer()),
-		Map.entry(String.class, new StringSerializer()),
+		serializers.put(Boolean.class, new BooleanSerializer());
+		serializers.put(Boolean.TYPE, new BooleanSerializer());
+		serializers.put(Byte.class, new ByteSerializer());
+		serializers.put(Byte.TYPE, new ByteSerializer());
+		serializers.put(Character.class, new CharacterSerializer());
+		serializers.put(Character.TYPE, new CharacterSerializer());
+		serializers.put(Double.class, new DoubleSerializer());
+		serializers.put(Double.TYPE, new DoubleSerializer());
+		serializers.put(Float.class, new FloatSerializer());
+		serializers.put(Float.TYPE, new FloatSerializer());
+		serializers.put(Integer.class, new IntegerSerializer());
+		serializers.put(Integer.TYPE, new IntegerSerializer());
+		serializers.put(Long.class, new LongSerializer());
+		serializers.put(Long.TYPE, new LongSerializer());
+		serializers.put(Number.class, new NumberSerializer());
+		serializers.put(Short.class, new ShortSerializer());
+		serializers.put(Short.TYPE, new ShortSerializer());
+		serializers.put(String.class, new StringSerializer());
 
 		// 3.4.1 java.math.BigInteger, BigDecimal
 		// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#java-math-biginteger-bigdecimal
-		Map.entry(BigDecimal.class, new BigDecimalSerializer()),
-		Map.entry(BigInteger.class, new BigIntegerSerializer()),
+		serializers.put(BigDecimal.class, new BigDecimalSerializer());
+		serializers.put(BigInteger.class, new BigIntegerSerializer());
 
 		// 3.4.2 java.net.URL, URI
 		// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#java-net-url-uri
-		Map.entry(URI.class, new URISerializer()),
-		Map.entry(URL.class, new URLSerializer()),
+		serializers.put(URI.class, new URISerializer());
+		serializers.put(URL.class, new URLSerializer());
 
 		// 3.4.3 java.util.Optional, OptionalInt, OptionalLong, OptionalDouble
 		// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#java-util-optional-optionalint-optionallong-optionaldouble
-		Map.entry(Optional.class, new OptionalSerializer()),
-		Map.entry(OptionalDouble.class, new OptionalDoubleSerializer()),
-		Map.entry(OptionalInt.class, new OptionalIntSerializer()),
-		Map.entry(OptionalLong.class, new OptionalLongSerializer()),
+		serializers.put(Optional.class, new OptionalSerializer());
+		serializers.put(OptionalDouble.class, new OptionalDoubleSerializer());
+		serializers.put(OptionalInt.class, new OptionalIntSerializer());
+		serializers.put(OptionalLong.class, new OptionalLongSerializer());
 
 		// 3.5 Dates
 		// 3.5.1 java.uril.Data, Calendar, GregorianCalendar
-		Map.entry(Date.class, new DateSerializer()),
-		Map.entry(Calendar.class, new CalendarSerializer()),
+		serializers.put(Date.class, new DateSerializer());
+		serializers.put(Calendar.class, new CalendarSerializer());
 
 		// 3.5.2. java.util.TimeZone, SimpleTimeZone
 		// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#java-util-timezone-simpletimezone
-		Map.entry(TimeZone.class, new TimeZoneSerializer()),
+		serializers.put(TimeZone.class, new TimeZoneSerializer());
 
 		// 3.5.3 java.time.*
-		Map.entry(Instant.class, new JavaTimeSerializer<>(DateTimeFormatter.ISO_INSTANT, Instant::from)),
-		Map.entry(LocalDate.class, new JavaTimeSerializer<>(DateTimeFormatter.ISO_LOCAL_DATE, LocalDate::from)),
-		Map.entry(LocalTime.class, new JavaTimeSerializer<>(DateTimeFormatter.ISO_LOCAL_TIME, LocalTime::from)),
-		Map.entry(LocalDateTime.class, new JavaTimeSerializer<>(DateTimeFormatter.ISO_LOCAL_DATE_TIME, LocalDateTime::from)),
-		Map.entry(ZonedDateTime.class, new JavaTimeSerializer<>(DateTimeFormatter.ISO_ZONED_DATE_TIME, ZonedDateTime::from)),
-		Map.entry(OffsetDateTime.class, new JavaTimeSerializer<>(DateTimeFormatter.ISO_OFFSET_DATE_TIME, OffsetDateTime::from)),
-		Map.entry(OffsetTime.class, new JavaTimeSerializer<>(DateTimeFormatter.ISO_OFFSET_TIME, OffsetTime::from)),
-		Map.entry(Duration.class, new DurationSerializer()),
-		Map.entry(Period.class, new PeriodSerializer()),
-		Map.entry(ZoneId.class, new ZoneIdSerializer()),
+		serializers.put(Instant.class, new JavaTimeSerializer<>(DateTimeFormatter.ISO_INSTANT, Instant::from));
+		serializers.put(LocalDate.class, new JavaTimeSerializer<>(DateTimeFormatter.ISO_LOCAL_DATE, LocalDate::from));
+		serializers.put(LocalTime.class, new JavaTimeSerializer<>(DateTimeFormatter.ISO_LOCAL_TIME, LocalTime::from));
+		serializers.put(LocalDateTime.class, new JavaTimeSerializer<>(DateTimeFormatter.ISO_LOCAL_DATE_TIME, LocalDateTime::from));
+		serializers.put(ZonedDateTime.class, new JavaTimeSerializer<>(DateTimeFormatter.ISO_ZONED_DATE_TIME, ZonedDateTime::from));
+		serializers.put(OffsetDateTime.class, new JavaTimeSerializer<>(DateTimeFormatter.ISO_OFFSET_DATE_TIME, OffsetDateTime::from));
+		serializers.put(OffsetTime.class, new JavaTimeSerializer<>(DateTimeFormatter.ISO_OFFSET_TIME, OffsetTime::from));
+		serializers.put(Duration.class, new DurationSerializer());
+		serializers.put(Period.class, new PeriodSerializer());
+		serializers.put(ZoneId.class, new ZoneIdSerializer());
 
 		// 3.9 Enum
 		// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#enum
-		Map.entry(Enum.class, new EnumSerializer()),
+		serializers.put(Enum.class, new EnumSerializer());
 
 		// 3.11 Collections
 		// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#collections
-		Map.entry(Collection.class, new CollectionSerializer()),
-		Map.entry(Map.class, new MapSerializer()),
+		serializers.put(Collection.class, new CollectionSerializer());
+		serializers.put(Map.class, new MapSerializer());
 
 		// 3.20 JSON Processing integration
 		// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#json-processing-integration
-		Map.entry(JsonArray.class, new JsonpSerializer()),
-		Map.entry(JsonObject.class, new JsonpSerializer()),
-		Map.entry(JsonValue.class, new JsonpSerializer())
-	// @formatter:on
-	);
+		serializers.put(JsonArray.class, new JsonpSerializer());
+		serializers.put(JsonObject.class, new JsonpSerializer());
+		serializers.put(JsonValue.class, new JsonpSerializer());
 
-	private Map<Class<?>, JsonbDeserializer<?>> deserializers = Map.ofEntries(
-	// @formatter:off
 		// 3.3 Basic Java Types
 		// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#basic-java-types
-		Map.entry(Boolean.class, new BooleanSerializer()),
-		Map.entry(Boolean.TYPE, new BooleanSerializer()),
-		Map.entry(Byte.class, new ByteSerializer()),
-		Map.entry(Byte.TYPE, new ByteSerializer()),
-		Map.entry(Character.class, new CharacterSerializer()),
-		Map.entry(Character.TYPE, new CharacterSerializer()),
-		Map.entry(Double.class, new DoubleSerializer()),
-		Map.entry(Double.TYPE, new DoubleSerializer()),
-		Map.entry(Float.class, new FloatSerializer()),
-		Map.entry(Float.TYPE, new FloatSerializer()),
-		Map.entry(Integer.class, new IntegerSerializer()),
-		Map.entry(Integer.TYPE, new IntegerSerializer()),
-		Map.entry(Long.class, new LongSerializer()),
-		Map.entry(Long.TYPE, new LongSerializer()),
-		Map.entry(Number.class, new NumberSerializer()),
-		Map.entry(Short.class, new ShortSerializer()),
-		Map.entry(Short.TYPE, new ShortSerializer()),
-		Map.entry(String.class, new StringSerializer()),
+		deserializers.put(Boolean.class, new BooleanSerializer());
+		deserializers.put(Boolean.TYPE, new BooleanSerializer());
+		deserializers.put(Byte.class, new ByteSerializer());
+		deserializers.put(Byte.TYPE, new ByteSerializer());
+		deserializers.put(Character.class, new CharacterSerializer());
+		deserializers.put(Character.TYPE, new CharacterSerializer());
+		deserializers.put(Double.class, new DoubleSerializer());
+		deserializers.put(Double.TYPE, new DoubleSerializer());
+		deserializers.put(Float.class, new FloatSerializer());
+		deserializers.put(Float.TYPE, new FloatSerializer());
+		deserializers.put(Integer.class, new IntegerSerializer());
+		deserializers.put(Integer.TYPE, new IntegerSerializer());
+		deserializers.put(Long.class, new LongSerializer());
+		deserializers.put(Long.TYPE, new LongSerializer());
+		deserializers.put(Number.class, new NumberSerializer());
+		deserializers.put(Short.class, new ShortSerializer());
+		deserializers.put(Short.TYPE, new ShortSerializer());
+		deserializers.put(String.class, new StringSerializer());
 
 		// 3.4.1 java.math.BigInteger, BigDecimal
 		// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#java-math-biginteger-bigdecimal
-		Map.entry(BigDecimal.class, new BigDecimalSerializer()),
-		Map.entry(BigInteger.class, new BigIntegerSerializer()),
+		deserializers.put(BigDecimal.class, new BigDecimalSerializer());
+		deserializers.put(BigInteger.class, new BigIntegerSerializer());
 
 		// 3.4.2 java.net.URL, URI
 		// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#java-net-url-uri
-		Map.entry(URI.class, new URISerializer()),
-		Map.entry(URL.class, new URLSerializer()),
+		deserializers.put(URI.class, new URISerializer());
+		deserializers.put(URL.class, new URLSerializer());
 
 		// 3.4.3 java.util.Optional, OptionalInt, OptionalLong, OptionalDouble
 		// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#java-util-optional-optionalint-optionallong-optionaldouble
-		Map.entry(Optional.class, new OptionalSerializer()),
-		Map.entry(OptionalDouble.class, new OptionalDoubleSerializer()),
-		Map.entry(OptionalInt.class, new OptionalIntSerializer()),
-		Map.entry(OptionalLong.class, new OptionalLongSerializer()),
+		deserializers.put(Optional.class, new OptionalSerializer());
+		deserializers.put(OptionalDouble.class, new OptionalDoubleSerializer());
+		deserializers.put(OptionalInt.class, new OptionalIntSerializer());
+		deserializers.put(OptionalLong.class, new OptionalLongSerializer());
 
 		// 3.5 Dates
 		// 3.5.1 java.uril.Data, Calendar, GregorianCalendar
-		Map.entry(Date.class, new DateSerializer()),
-		Map.entry(Calendar.class, new CalendarSerializer()),
+		deserializers.put(Date.class, new DateSerializer());
+		deserializers.put(Calendar.class, new CalendarSerializer());
 
 		// 3.5.2. java.util.TimeZone, SimpleTimeZone
 		// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#java-util-timezone-simpletimezone
-		Map.entry(TimeZone.class, new TimeZoneSerializer()),
-		Map.entry(SimpleTimeZone.class, new SimpleTimeZoneDeserializer()),
+		deserializers.put(TimeZone.class, new TimeZoneSerializer());
+		deserializers.put(SimpleTimeZone.class, new SimpleTimeZoneDeserializer());
 
 		// 3.5.3 java.time.*
-		Map.entry(Instant.class, new JavaTimeSerializer<>(DateTimeFormatter.ISO_INSTANT, Instant::from)),
-		Map.entry(LocalDate.class, new JavaTimeSerializer<>(DateTimeFormatter.ISO_LOCAL_DATE, LocalDate::from)),
-		Map.entry(LocalTime.class, new JavaTimeSerializer<>(DateTimeFormatter.ISO_LOCAL_TIME, LocalTime::from)),
-		Map.entry(LocalDateTime.class, new JavaTimeSerializer<>(DateTimeFormatter.ISO_LOCAL_DATE_TIME, LocalDateTime::from)),
-		Map.entry(ZonedDateTime.class, new JavaTimeSerializer<>(DateTimeFormatter.ISO_ZONED_DATE_TIME, ZonedDateTime::from)),
-		Map.entry(OffsetDateTime.class, new JavaTimeSerializer<>(DateTimeFormatter.ISO_OFFSET_DATE_TIME, OffsetDateTime::from)),
-		Map.entry(OffsetTime.class, new JavaTimeSerializer<>(DateTimeFormatter.ISO_OFFSET_TIME, OffsetTime::from)),
-		Map.entry(Duration.class, new DurationSerializer()),
-		Map.entry(Period.class, new PeriodSerializer()),
-		Map.entry(ZoneId.class, new ZoneIdSerializer()),
+		deserializers.put(Instant.class, new JavaTimeSerializer<>(DateTimeFormatter.ISO_INSTANT, Instant::from));
+		deserializers.put(LocalDate.class, new JavaTimeSerializer<>(DateTimeFormatter.ISO_LOCAL_DATE, LocalDate::from));
+		deserializers.put(LocalTime.class, new JavaTimeSerializer<>(DateTimeFormatter.ISO_LOCAL_TIME, LocalTime::from));
+		deserializers.put(LocalDateTime.class, new JavaTimeSerializer<>(DateTimeFormatter.ISO_LOCAL_DATE_TIME, LocalDateTime::from));
+		deserializers.put(ZonedDateTime.class, new JavaTimeSerializer<>(DateTimeFormatter.ISO_ZONED_DATE_TIME, ZonedDateTime::from));
+		deserializers.put(OffsetDateTime.class, new JavaTimeSerializer<>(DateTimeFormatter.ISO_OFFSET_DATE_TIME, OffsetDateTime::from));
+		deserializers.put(OffsetTime.class, new JavaTimeSerializer<>(DateTimeFormatter.ISO_OFFSET_TIME, OffsetTime::from));
+		deserializers.put(Duration.class, new DurationSerializer());
+		deserializers.put(Period.class, new PeriodSerializer());
+		deserializers.put(ZoneId.class, new ZoneIdSerializer());
 
 		// 3.9 Enum
 		// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#enum
-		Map.entry(Enum.class, new EnumSerializer()),
+		deserializers.put(Enum.class, new EnumSerializer());
 
 		// 3.11 Collections
 		// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#collections
-		Map.entry(Collection.class, new CollectionSerializer()),
-		Map.entry(Map.class, new MapSerializer()),
+		deserializers.put(Collection.class, new CollectionSerializer());
+		deserializers.put(Map.class, new MapSerializer());
 
 		// 3.20 JSON Processing integration
 		// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#json-processing-integration
-		Map.entry(JsonArray.class, new JsonpSerializer()),
-		Map.entry(JsonObject.class, new JsonpSerializer()),
-		Map.entry(JsonValue.class, new JsonpSerializer())
-	// @formatter:on
-	);
+		deserializers.put(JsonArray.class, new JsonpSerializer());
+		deserializers.put(JsonObject.class, new JsonpSerializer());
+		deserializers.put(JsonValue.class, new JsonpSerializer());
+	}
 
 	// 3.7 Java Class
 	// https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#java-class
@@ -277,6 +277,8 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 	public MyrJsonbContext(final JsonbConfig config, final JsonProvider jsonp) {
 		this.config = config;
 		this.jsonp = Objects.requireNonNull(jsonp);
+
+		installAdapters(config.getProperty(JsonbConfig.ADAPTERS).map(JsonbAdapter[].class::cast).orElseGet(() -> new JsonbAdapter[0]));
 	}
 
 	@Override
@@ -423,6 +425,19 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 			generator.writeNull();
 		} else {
 			serialize(object, object.getClass(), generator);
+		}
+	}
+
+	private void installAdapters(final JsonbAdapter<?, ?>[] adapters) {
+		for (final JsonbAdapter<?, ?> adapter : adapters) {
+			final Type adapterType = ReflectionUilities.getAncestorType(adapter.getClass(), JsonbAdapter.class);
+			final Type originalType = ReflectionUilities.getTypeArguments(adapterType)[0];
+			final Class<?> originalRawType = ReflectionUilities.getRawType(originalType);
+
+			final AdapterSerializer<?, ?> serializer = new AdapterSerializer<>(adapter);
+
+			serializers.put(originalRawType, serializer);
+			deserializers.put(originalRawType, serializer);
 		}
 	}
 
