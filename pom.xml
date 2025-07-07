@@ -35,17 +35,17 @@
 			<artifactId>jakarta.json.bind-api</artifactId>
 		</dependency>
 
-<!--		<dependency>-->
-<!--			<groupId>se.narstrom.myr</groupId>-->
-<!--			<artifactId>myrjson</artifactId>-->
-<!--			<version>0.0.1-SNAPSHOT</version>-->
-<!--			<scope>test</scope>-->
-<!--		</dependency>-->
 		<dependency>
-			<groupId>org.eclipse.parsson</groupId>
-			<artifactId>parsson</artifactId>
-			<version>1.1.7</version>
+			<groupId>se.narstrom.myr</groupId>
+			<artifactId>myrjson</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+			<scope>test</scope>
 		</dependency>
+<!--		<dependency>-->
+<!--			<groupId>org.eclipse.parsson</groupId>-->
+<!--			<artifactId>parsson</artifactId>-->
+<!--			<version>1.1.7</version>-->
+<!--		</dependency>-->
 
 		<!-- TEST DEPENDENCIES -->
 		<dependency>
@@ -99,7 +99,7 @@
 						<include>ee.jakarta.tck.json.bind.defaultmapping.ignore.**</include>
 						<include>ee.jakarta.tck.json.bind.defaultmapping.jsonptypes.**</include>
 						<include>ee.jakarta.tck.json.bind.defaultmapping.nullvalue.**</include>
-<!--						<include>ee.jakarta.tck.json.bind.defaultmapping.polymorphictypes.**</include>-->
+						<include>ee.jakarta.tck.json.bind.defaultmapping.polymorphictypes.**</include>
 						<include>ee.jakarta.tck.json.bind.defaultmapping.specifictypes.**</include>
 						<include>ee.jakarta.tck.json.bind.defaultmapping.uniqueness.**</include>
 						<include>ee.jakarta.tck.json.bind.defaultmapping.untyped.**</include>
