@@ -68,7 +68,7 @@ public final class DefaultDeserializer implements JsonbDeserializer<Object> {
 		Class<?> parent = null;
 
 		final Class<?> superClass = type.getSuperclass();
-		if (superClass.isAnnotationPresent(JsonbTypeInfo.class))
+		if (superClass != null && superClass.isAnnotationPresent(JsonbTypeInfo.class))
 			parent = superClass;
 
 		for (final Class<?> iface : type.getInterfaces()) {
