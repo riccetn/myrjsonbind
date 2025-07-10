@@ -13,7 +13,7 @@ import jakarta.json.bind.serializer.SerializationContext;
 import jakarta.json.stream.JsonGenerator;
 import jakarta.json.stream.JsonParser;
 import jakarta.json.stream.JsonParser.Event;
-import se.narstrom.myr.json.bind.reflect.ReflectionUilities;
+import se.narstrom.myr.json.bind.reflect.ReflectionUtilities;
 
 public final class ArraySerializer implements JsonbSerializer<Object>, JsonbDeserializer<Object> {
 
@@ -34,10 +34,10 @@ public final class ArraySerializer implements JsonbSerializer<Object>, JsonbDese
 
 	@Override
 	public Object deserialize(final JsonParser parser, final DeserializationContext context, final Type type) {
-		if (!ReflectionUilities.getRawType(type).isArray())
+		if (!ReflectionUtilities.getRawType(type).isArray())
 			throw new JsonbException("Expected an array, got type: " + type.getTypeName());
 
-		final Type componentType = ReflectionUilities.getComponentType(type);
+		final Type componentType = ReflectionUtilities.getComponentType(type);
 		final List<Object> elements = new ArrayList<>();
 
 		while (parser.next() != Event.END_ARRAY) {
@@ -46,7 +46,7 @@ public final class ArraySerializer implements JsonbSerializer<Object>, JsonbDese
 		}
 
 		// Calling List.toArray() dose not work for primitive component types
-		final Object array = Array.newInstance(ReflectionUilities.getRawType(componentType), elements.size());
+		final Object array = Array.newInstance(ReflectionUtilities.getRawType(componentType), elements.size());
 
 		int index = 0;
 		for (final Object element : elements) {

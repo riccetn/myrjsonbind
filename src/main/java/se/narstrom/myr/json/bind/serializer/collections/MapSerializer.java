@@ -17,13 +17,13 @@ import jakarta.json.bind.serializer.SerializationContext;
 import jakarta.json.stream.JsonGenerator;
 import jakarta.json.stream.JsonParser;
 import jakarta.json.stream.JsonParser.Event;
-import se.narstrom.myr.json.bind.reflect.ReflectionUilities;
+import se.narstrom.myr.json.bind.reflect.ReflectionUtilities;
 
 public final class MapSerializer implements JsonbSerializer<Map<String, ?>>, JsonbDeserializer<Map<String, ?>> {
 
 	@Override
 	public Map<String, ?> deserialize(final JsonParser parser, final DeserializationContext context, final Type type) {
-		final Class<?> clazz = ReflectionUilities.getRawType(type);
+		final Class<?> clazz = ReflectionUtilities.getRawType(type);
 
 		final Type[] keyAndValueTypes = getKeyAndValueTypes(type);
 		if (keyAndValueTypes == null)
@@ -78,7 +78,7 @@ public final class MapSerializer implements JsonbSerializer<Map<String, ?>>, Jso
 	}
 
 	private Type[] getKeyAndValueTypes(final Type type) {
-		final Type genericMap = ReflectionUilities.getAncestorType(type, Map.class);
+		final Type genericMap = ReflectionUtilities.getAncestorType(type, Map.class);
 
 		if (genericMap instanceof ParameterizedType parameterized) {
 			return parameterized.getActualTypeArguments();

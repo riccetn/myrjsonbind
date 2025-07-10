@@ -11,7 +11,7 @@ import jakarta.json.bind.serializer.SerializationContext;
 import jakarta.json.stream.JsonGenerator;
 import jakarta.json.stream.JsonParser;
 import jakarta.json.stream.JsonParser.Event;
-import se.narstrom.myr.json.bind.reflect.ReflectionUilities;
+import se.narstrom.myr.json.bind.reflect.ReflectionUtilities;
 
 public final class OptionalSerializer implements JsonbSerializer<Optional<?>>, JsonbDeserializer<Optional<?>> {
 
@@ -20,7 +20,7 @@ public final class OptionalSerializer implements JsonbSerializer<Optional<?>>, J
 		if (parser.currentEvent() == Event.VALUE_NULL)
 			return Optional.empty();
 
-		final Type optionalType = ReflectionUilities.getAncestorType(type, Optional.class);
+		final Type optionalType = ReflectionUtilities.getAncestorType(type, Optional.class);
 
 		if (optionalType instanceof ParameterizedType parameterized) {
 			final Type innerType = parameterized.getActualTypeArguments()[0];

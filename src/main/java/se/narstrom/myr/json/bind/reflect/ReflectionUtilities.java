@@ -9,8 +9,8 @@ import java.util.Arrays;
 
 import jakarta.json.bind.JsonbException;
 
-public final class ReflectionUilities {
-	private ReflectionUilities() {
+public final class ReflectionUtilities {
+	private ReflectionUtilities() {
 	}
 
 	public static Type getAncestorType(final Type type, final Class<?> rawAncestor) {

@@ -23,14 +23,14 @@ import jakarta.json.bind.serializer.SerializationContext;
 import jakarta.json.stream.JsonGenerator;
 import jakarta.json.stream.JsonParser;
 import jakarta.json.stream.JsonParser.Event;
-import se.narstrom.myr.json.bind.reflect.ReflectionUilities;
+import se.narstrom.myr.json.bind.reflect.ReflectionUtilities;
 
 // https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#collections
 public final class CollectionSerializer implements JsonbSerializer<Collection<?>>, JsonbDeserializer<Collection<?>> {
 
 	@Override
 	public Collection<?> deserialize(final JsonParser parser, final DeserializationContext ctx, final Type type) {
-		final Class<?> clazz = ReflectionUilities.getRawType(type);
+		final Class<?> clazz = ReflectionUtilities.getRawType(type);
 		final Type elementType = findElementType(type);
 		if (elementType == null)
 			throw new ClassCastException("Not a collection?");
@@ -78,10 +78,10 @@ public final class CollectionSerializer implements JsonbSerializer<Collection<?>
 	}
 
 	private Type findElementType(final Type type) {
-		final Type genericCollection = ReflectionUilities.getAncestorType(type, Collection.class);
+		final Type genericCollection = ReflectionUtilities.getAncestorType(type, Collection.class);
 
 		if (genericCollection instanceof ParameterizedType parameterized) {
-			return ReflectionUilities.resolveType(parameterized.getActualTypeArguments()[0], type);
+			return ReflectionUtilities.resolveType(parameterized.getActualTypeArguments()[0], type);
 		} else {
 			return Object.class;
 		}

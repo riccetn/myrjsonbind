@@ -10,7 +10,7 @@ import jakarta.json.bind.serializer.JsonbSerializer;
 import jakarta.json.bind.serializer.SerializationContext;
 import jakarta.json.stream.JsonGenerator;
 import jakarta.json.stream.JsonParser;
-import se.narstrom.myr.json.bind.reflect.ReflectionUilities;
+import se.narstrom.myr.json.bind.reflect.ReflectionUtilities;
 
 public final class AdapterSerializer<O, A> implements JsonbSerializer<O>, JsonbDeserializer<O> {
 	final JsonbAdapter<O, A> adapter;
@@ -21,8 +21,8 @@ public final class AdapterSerializer<O, A> implements JsonbSerializer<O>, JsonbD
 
 	@Override
 	public O deserialize(final JsonParser parser, final DeserializationContext context, final Type type) {
-		final Type adapterType = ReflectionUilities.getAncestorType(adapter.getClass(), JsonbAdapter.class);
-		final Type adaptedType = ReflectionUilities.getTypeArguments(adapterType)[1];
+		final Type adapterType = ReflectionUtilities.getAncestorType(adapter.getClass(), JsonbAdapter.class);
+		final Type adaptedType = ReflectionUtilities.getTypeArguments(adapterType)[1];
 
 		final A adapted = context.deserialize(adaptedType, parser);
 		try {

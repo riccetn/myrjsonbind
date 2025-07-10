@@ -19,7 +19,7 @@ import java.util.stream.Stream;
 
 import jakarta.json.bind.JsonbException;
 import jakarta.json.bind.annotation.JsonbProperty;
-import se.narstrom.myr.json.bind.reflect.ReflectionUilities;
+import se.narstrom.myr.json.bind.reflect.ReflectionUtilities;
 
 public final class Properties {
 
@@ -120,7 +120,7 @@ public final class Properties {
 	}
 
 	public static SequencedMap<String, Property> getProperties(final Type beanType) {
-		final Class<?> rawType = ReflectionUilities.getRawType(beanType);
+		final Class<?> rawType = ReflectionUtilities.getRawType(beanType);
 
 		if (rawType.isAnnotation() || rawType.isArray() || rawType.isEnum() || rawType.isInterface() || rawType.isPrimitive() || rawType.isSynthetic())
 			throw new JsonbException("Cannot list properties of type " + beanType.getTypeName());
@@ -128,7 +128,7 @@ public final class Properties {
 		if (rawType == Object.class)
 			return new LinkedHashMap<>();
 
-		final SequencedMap<String, Property> superProperties = getProperties(ReflectionUilities.getSuperType(beanType));
+		final SequencedMap<String, Property> superProperties = getProperties(ReflectionUtilities.getSuperType(beanType));
 
 		final Set<String> blacklist = new HashSet<>();
 		blacklist.addAll(superProperties.keySet());
@@ -184,7 +184,7 @@ public final class Properties {
 			}
 
 			final Type unresolvedPropertyType = getUnresolvedPropertyType(field, getter, setter);
-			final Type propertyType = ReflectionUilities.resolveType(unresolvedPropertyType, beanType);
+			final Type propertyType = ReflectionUtilities.resolveType(unresolvedPropertyType, beanType);
 
 			if (getter != null || setter != null) {
 				final boolean publicGetter = getter != null && Modifier.isPublic(getter.getModifiers());

@@ -56,7 +56,7 @@ import jakarta.json.spi.JsonProvider;
 import jakarta.json.stream.JsonGenerator;
 import jakarta.json.stream.JsonParser;
 import jakarta.json.stream.JsonParser.Event;
-import se.narstrom.myr.json.bind.reflect.ReflectionUilities;
+import se.narstrom.myr.json.bind.reflect.ReflectionUtilities;
 import se.narstrom.myr.json.bind.serializer.AdapterSerializer;
 import se.narstrom.myr.json.bind.serializer.ArraySerializer;
 import se.narstrom.myr.json.bind.serializer.BigDecimalSerializer;
@@ -77,6 +77,7 @@ import se.narstrom.myr.json.bind.serializer.basic.ShortSerializer;
 import se.narstrom.myr.json.bind.serializer.basic.StringSerializer;
 import se.narstrom.myr.json.bind.serializer.collections.CollectionSerializer;
 import se.narstrom.myr.json.bind.serializer.collections.MapSerializer;
+import se.narstrom.myr.json.bind.serializer.defaults.DefaultDeserializer;
 import se.narstrom.myr.json.bind.serializer.defaults.DefaultDeserializer;
 import se.narstrom.myr.json.bind.serializer.defaults.DefaultSerializer;
 import se.narstrom.myr.json.bind.serializer.optional.OptionalDoubleSerializer;
@@ -430,9 +431,9 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 
 	private void installAdapters(final JsonbAdapter<?, ?>[] adapters) {
 		for (final JsonbAdapter<?, ?> adapter : adapters) {
-			final Type adapterType = ReflectionUilities.getAncestorType(adapter.getClass(), JsonbAdapter.class);
-			final Type originalType = ReflectionUilities.getTypeArguments(adapterType)[0];
-			final Class<?> originalRawType = ReflectionUilities.getRawType(originalType);
+			final Type adapterType = ReflectionUtilities.getAncestorType(adapter.getClass(), JsonbAdapter.class);
+			final Type originalType = ReflectionUtilities.getTypeArguments(adapterType)[0];
+			final Class<?> originalRawType = ReflectionUtilities.getRawType(originalType);
 
 			final AdapterSerializer<?, ?> serializer = new AdapterSerializer<>(adapter);
 
@@ -450,7 +451,7 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 	}
 
 	private JsonbDeserializer<?> findDeserializer(final Type type, final JsonParser parser) {
-		Class<?> clazz = ReflectionUilities.getRawType(type);
+		Class<?> clazz = ReflectionUtilities.getRawType(type);
 
 		{
 			final JsonbDeserializer<?> candidate = deserializers.get(clazz);
@@ -486,7 +487,7 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 	}
 
 	private JsonbSerializer<?> findSerializer(final Type type) {
-		final Class<?> clazz = ReflectionUilities.getRawType(type);
+		final Class<?> clazz = ReflectionUtilities.getRawType(type);
 
 		{
 			final JsonbSerializer<?> candidate = serializers.get(clazz);

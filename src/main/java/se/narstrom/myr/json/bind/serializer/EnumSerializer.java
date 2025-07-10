@@ -10,7 +10,7 @@ import jakarta.json.bind.serializer.SerializationContext;
 import jakarta.json.stream.JsonGenerator;
 import jakarta.json.stream.JsonParser;
 import jakarta.json.stream.JsonParser.Event;
-import se.narstrom.myr.json.bind.reflect.ReflectionUilities;
+import se.narstrom.myr.json.bind.reflect.ReflectionUtilities;
 
 // https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#enum
 public final class EnumSerializer implements JsonbSerializer<Enum<?>>, JsonbDeserializer<Enum<?>> {
@@ -20,7 +20,7 @@ public final class EnumSerializer implements JsonbSerializer<Enum<?>>, JsonbDese
 		if (parser.currentEvent() != Event.VALUE_STRING)
 			throw new JsonbException("Expected a string found " + parser.currentEvent());
 
-		final Class<?> rawType = ReflectionUilities.getRawType(type);
+		final Class<?> rawType = ReflectionUtilities.getRawType(type);
 		return Enum.valueOf((Class) rawType, parser.getString());
 	}
 
