@@ -78,7 +78,6 @@ import se.narstrom.myr.json.bind.serializer.basic.StringSerializer;
 import se.narstrom.myr.json.bind.serializer.collections.CollectionSerializer;
 import se.narstrom.myr.json.bind.serializer.collections.MapSerializer;
 import se.narstrom.myr.json.bind.serializer.defaults.DefaultDeserializer;
-import se.narstrom.myr.json.bind.serializer.defaults.DefaultDeserializer;
 import se.narstrom.myr.json.bind.serializer.defaults.DefaultSerializer;
 import se.narstrom.myr.json.bind.serializer.optional.OptionalDoubleSerializer;
 import se.narstrom.myr.json.bind.serializer.optional.OptionalIntSerializer;

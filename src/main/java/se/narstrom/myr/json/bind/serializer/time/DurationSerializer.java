@@ -26,5 +26,4 @@ public final class DurationSerializer implements JsonbSerializer<Duration>, Json
 	public void serialize(final Duration obj, final JsonGenerator generator, final SerializationContext ctx) {
 		generator.write(obj.toString());
 	}
-
 }

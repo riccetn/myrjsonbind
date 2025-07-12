@@ -79,7 +79,5 @@ public final class CalendarSerializer implements JsonbSerializer<Calendar>, Json
 		} else {
 			generator.write(obj.toInstant().atZone(obj.getTimeZone().toZoneId()).format(formatter));
 		}
-
 	}
-
 }

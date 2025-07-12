@@ -5,7 +5,10 @@ import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.Objects;
 
-public record ParameterizedTypeImpl(Type ownerType, Class<?> rawType, Type[] arguments) implements ParameterizedType {
+public class ParameterizedTypeImpl implements ParameterizedType {
+	private final Type ownerType;
+	private final Class<?> rawType;
+	private final Type[] arguments;
 
 	public ParameterizedTypeImpl(final Type ownerType, final Class<?> rawType, final Type[] arguments) {
 		this.ownerType = ownerType;
@@ -56,5 +59,4 @@ public record ParameterizedTypeImpl(Type ownerType, Class<?> rawType, Type[] arg
 		}
 		return sb.toString();
 	}
-
 }

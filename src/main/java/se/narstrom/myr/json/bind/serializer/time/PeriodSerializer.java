@@ -26,5 +26,4 @@ public final class PeriodSerializer implements JsonbSerializer<Period>, JsonbDes
 	public void serialize(final Period obj, final JsonGenerator generator, final SerializationContext ctx) {
 		generator.write(obj.toString());
 	}
-
 }

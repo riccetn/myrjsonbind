@@ -86,6 +86,7 @@
 						<include>ee.jakarta.tck.json.bind.api.exception.**</include>
 						<include>ee.jakarta.tck.json.bind.api.jsonb.**</include>
 						<include>ee.jakarta.tck.json.bind.api.jsonbadapter.**</include>
+<!--						<include>ee.jakarta.tck.json.bind.customizedmapping.dateformat.**</include>-->
 						<include>ee.jakarta.tck.json.bind.defaultmapping.arrays.**</include>
 						<include>ee.jakarta.tck.json.bind.defaultmapping.attributeorder.**</include>
 						<include>ee.jakarta.tck.json.bind.defaultmapping.basictypes.**</include>

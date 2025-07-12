@@ -234,19 +234,6 @@ public class DefaultDeserializer implements JsonbDeserializer<Object> {
 		return Collections.unmodifiableSequencedMap(properties);
 	}
 
-	private static sealed interface Property {
-		public Type type();
-	}
-
-	private record CreatorProperty(Type type, int index) implements Property {
-	}
-
-	private record FieldProperty(Type type, Field field) implements Property {
-	}
-
-	private record SetterProperty(Type type, Method setter) implements Property {
-	}
-
 	private Map<String, Property> findProperties(final Type beanType, final Class<?> beanClazz) {
 		final Map<String, Property> properties;
 
@@ -349,5 +336,18 @@ public class DefaultDeserializer implements JsonbDeserializer<Object> {
 		properties.putAll(localProperties);
 
 		return properties;
+	}
+
+	private static sealed interface Property {
+		public Type type();
+	}
+
+	private record CreatorProperty(Type type, int index) implements Property {
+	}
+
+	private record FieldProperty(Type type, Field field) implements Property {
+	}
+
+	private record SetterProperty(Type type, Method setter) implements Property {
 	}
 }

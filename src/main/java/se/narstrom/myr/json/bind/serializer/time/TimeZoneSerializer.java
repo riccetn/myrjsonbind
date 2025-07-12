@@ -31,5 +31,4 @@ public final class TimeZoneSerializer implements JsonbSerializer<TimeZone>, Json
 			throw new JsonbException("Deprecated 3-letter zone id");
 		generator.write(obj.getID());
 	}
-
 }

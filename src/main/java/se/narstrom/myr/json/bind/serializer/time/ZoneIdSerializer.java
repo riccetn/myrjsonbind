@@ -26,5 +26,4 @@ public final class ZoneIdSerializer implements JsonbSerializer<ZoneId>, JsonbDes
 	public void serialize(final ZoneId obj, final JsonGenerator generator, final SerializationContext ctx) {
 		generator.write(obj.getId());
 	}
-
 }

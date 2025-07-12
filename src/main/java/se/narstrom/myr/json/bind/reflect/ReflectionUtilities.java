@@ -95,12 +95,7 @@ public final class ReflectionUtilities {
 		if (superType == null)
 			return null;
 
-		final TypeVariable<?>[] typeParameters = rawType.getTypeParameters();
-		final Type[] typeArguments = getTypeArguments(type);
-
-		assert typeParameters.length == typeArguments.length;
-
-		return resolveType(superType, typeParameters, typeArguments);
+		return resolveType(superType, type);
 	}
 
 	public static Type[] getTypeArguments(final Type type) {
