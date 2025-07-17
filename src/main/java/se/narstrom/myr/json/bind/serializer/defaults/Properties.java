@@ -119,7 +119,7 @@ public final class Properties {
 			throw new AssertionError("Unreachable");
 	}
 
-	public static SequencedMap<String, Property> getProperties(final Type beanType) {
+	public static SequencedMap<String, OldProperty> getProperties(final Type beanType) {
 		final Class<?> rawType = ReflectionUtilities.getRawType(beanType);
 
 		if (rawType.isAnnotation() || rawType.isArray() || rawType.isEnum() || rawType.isInterface() || rawType.isPrimitive() || rawType.isSynthetic())
@@ -128,12 +128,12 @@ public final class Properties {
 		if (rawType == Object.class)
 			return new LinkedHashMap<>();
 
-		final SequencedMap<String, Property> superProperties = getProperties(ReflectionUtilities.getSuperType(beanType));
+		final SequencedMap<String, OldProperty> superProperties = getProperties(ReflectionUtilities.getSuperType(beanType));
 
 		final Set<String> blacklist = new HashSet<>();
 		blacklist.addAll(superProperties.keySet());
 
-		final SortedMap<String, Property> localProperties = new TreeMap<>();
+		final SortedMap<String, OldProperty> localProperties = new TreeMap<>();
 
 		final Map<String, Field> fields = listFields(rawType);
 		final Map<String, Method> getters = new HashMap<>();
@@ -195,7 +195,7 @@ public final class Properties {
 					continue;
 				}
 
-				localProperties.put(propertyName, new Property(propertyType, propertyName, null, getter, setter));
+				localProperties.put(propertyName, new OldProperty(propertyType, propertyName, null, getter, setter));
 			} else {
 				assert field != null;
 
@@ -204,11 +204,11 @@ public final class Properties {
 					continue;
 				}
 
-				localProperties.put(propertyName, new Property(propertyType, propertyName, field, null, null));
+				localProperties.put(propertyName, new OldProperty(propertyType, propertyName, field, null, null));
 			}
 		}
 
-		final SequencedMap<String, Property> properties = new LinkedHashMap<>();
+		final SequencedMap<String, OldProperty> properties = new LinkedHashMap<>();
 		properties.putAll(superProperties);
 		properties.putAll(localProperties);
 

@@ -59,7 +59,7 @@ public final class DefaultSerializer implements JsonbSerializer<Object> {
 	}
 
 	private void serializeProperties(final Object object, final Class<?> clazz, final JsonGenerator generator, final SerializationContext context, final Set<String> blacklist) {
-		final SequencedMap<String, Property> properties = Properties.getProperties(clazz);
+		final SequencedMap<String, OldProperty> properties = Properties.getProperties(clazz);
 
 		for (final String properyName : properties.keySet()) {
 			if (blacklist.contains(properyName))
@@ -68,7 +68,7 @@ public final class DefaultSerializer implements JsonbSerializer<Object> {
 
 		final boolean writeNulls = getWriteNulls(context);
 
-		for (final Property property : properties.values()) {
+		for (final OldProperty property : properties.values()) {
 			final Object value = property.getValue(object);
 
 			if (!writeNulls && isNullOrEmptyOptional(value))

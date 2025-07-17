@@ -51,10 +51,8 @@ public class DefaultDeserializer implements JsonbDeserializer<Object> {
 		validatePolymorphicType(concreteClazz);
 
 		final Executable creator = findCreator(concreteClazz);
-		final SequencedMap<String, CreatorProperty> creatorProperties = findCreatorProperties(creator);
-		final Map<String, Property> properties = findProperties(concreteType, concreteClazz);
-
-		properties.putAll(creatorProperties);
+		final SequencedMap<String, CreatorProperty> creatorProperties = findCreatorProperties(type, creator);
+		final Map<String, WriteableProperty> properties = findProperties(concreteType, concreteClazz);
 
 		final JsonProvider jsonp = ((MyrJsonbContext) context).getJsonpProvider();
 		final JsonParser objectParser = jsonp.createParserFactory(null).createParser(jsonObject);
@@ -67,7 +65,7 @@ public class DefaultDeserializer implements JsonbDeserializer<Object> {
 			assert event == Event.KEY_NAME;
 			final String name = objectParser.getString();
 
-			final Property property = properties.get(name);
+			final WriteableProperty property = properties.get(name);
 
 			if (property == null) {
 				if (((MyrJsonbContext) context).getConfig().getProperty("jsonb.fail-on-unknown-properties").orElse(Boolean.FALSE) == Boolean.TRUE)
@@ -101,28 +99,9 @@ public class DefaultDeserializer implements JsonbDeserializer<Object> {
 			}
 
 			for (final Map.Entry<String, Object> entry : values.entrySet()) {
-				final Property property = properties.get(entry.getKey());
+				final WriteableProperty property = properties.get(entry.getKey());
 				final Object value = entry.getValue();
-				switch (property) {
-					case FieldProperty fieldProperty -> {
-						try {
-							fieldProperty.field().setAccessible(true);
-							fieldProperty.field().set(object, value);
-						} finally {
-							fieldProperty.field().setAccessible(false);
-						}
-					}
-					case SetterProperty setterProperty -> {
-						try {
-							setterProperty.setter().setAccessible(true);
-							setterProperty.setter().invoke(object, value);
-						} finally {
-							setterProperty.setter().setAccessible(false);
-						}
-					}
-					case CreatorProperty _ -> {
-					}
-				}
+				property.set(object, value);
 			}
 
 			return object;
@@ -213,7 +192,7 @@ public class DefaultDeserializer implements JsonbDeserializer<Object> {
 		return creator;
 	}
 
-	private SequencedMap<String, CreatorProperty> findCreatorProperties(final Executable creator) {
+	private SequencedMap<String, CreatorProperty> findCreatorProperties(final Type beanType, final Executable creator) {
 		final SequencedMap<String, CreatorProperty> properties = new LinkedHashMap<>();
 
 		int index = 0;
@@ -226,16 +205,15 @@ public class DefaultDeserializer implements JsonbDeserializer<Object> {
 			else
 				name = parameter.getName();
 
-			final Type type = parameter.getParameterizedType();
-			if (properties.put(name, new CreatorProperty(type, index++)) != null)
+			if (properties.put(name, new CreatorProperty(beanType, creator, index++)) != null)
 				throw new JsonbException("Duplicate property name");
 		}
 
 		return Collections.unmodifiableSequencedMap(properties);
 	}
 
-	private Map<String, Property> findProperties(final Type beanType, final Class<?> beanClazz) {
-		final Map<String, Property> properties;
+	private Map<String, WriteableProperty> findProperties(final Type beanType, final Class<?> beanClazz) {
+		final Map<String, WriteableProperty> properties;
 
 		final Type superType = ReflectionUtilities.getSuperType(beanType);
 		final Class<?> superClazz = beanClazz.getSuperclass();
@@ -274,7 +252,7 @@ public class DefaultDeserializer implements JsonbDeserializer<Object> {
 		names.addAll(fields.keySet());
 		names.addAll(setters.keySet());
 
-		final Map<String, Property> localProperties = new HashMap<>();
+		final Map<String, WriteableProperty> localProperties = new HashMap<>();
 
 		for (final String name : names) {
 			final Field field = fields.get(name);
@@ -310,19 +288,17 @@ public class DefaultDeserializer implements JsonbDeserializer<Object> {
 				}
 			}
 
-			final Type propertyType = ReflectionUtilities.resolveType(unresolvedPropertyType, beanType);
-
 			if (propertyName == null)
 				propertyName = name;
 
-			final Property property;
+			final WriteableProperty property;
 			if (setter != null) {
 				if (Modifier.isPublic(setter.getModifiers()))
-					property = new SetterProperty(propertyType, setter);
+					property = new SetterProperty(beanType, setter);
 				else
 					continue;
 			} else if (field != null && Modifier.isPublic(field.getModifiers())) {
-				property = new FieldProperty(propertyType, field);
+				property = new FieldProperty(beanType, field);
 			} else {
 				continue;
 			}
@@ -336,18 +312,5 @@ public class DefaultDeserializer implements JsonbDeserializer<Object> {
 		properties.putAll(localProperties);
 
 		return properties;
-	}
-
-	private static sealed interface Property {
-		public Type type();
-	}
-
-	private record CreatorProperty(Type type, int index) implements Property {
-	}
-
-	private record FieldProperty(Type type, Field field) implements Property {
-	}
-
-	private record SetterProperty(Type type, Method setter) implements Property {
 	}
 }

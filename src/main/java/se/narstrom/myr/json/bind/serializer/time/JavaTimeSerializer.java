@@ -19,8 +19,10 @@ import jakarta.json.stream.JsonGenerator;
 import jakarta.json.stream.JsonParser;
 import jakarta.json.stream.JsonParser.Event;
 import se.narstrom.myr.json.bind.MyrJsonbContext;
+import se.narstrom.myr.json.bind.serializer.defaults.Property;
+import se.narstrom.myr.json.bind.serializer.defaults.PropertyDeserializer;
 
-public final class JavaTimeSerializer<T extends TemporalAccessor> implements JsonbSerializer<T>, JsonbDeserializer<T> {
+public final class JavaTimeSerializer<T extends TemporalAccessor> implements JsonbSerializer<T>, JsonbDeserializer<T>, PropertyDeserializer<T> {
 	private final DateTimeFormatter defaultFormatter;
 
 	private final TemporalQuery<T> temporalQuery;
@@ -41,6 +43,12 @@ public final class JavaTimeSerializer<T extends TemporalAccessor> implements Jso
 		} catch (final DateTimeParseException ex) {
 			throw new JsonbException(ex.getMessage(), ex);
 		}
+	}
+
+	@Override
+	public T deserializeProperty(final JsonParser parser, final MyrJsonbContext context, final Property property) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	@Override
