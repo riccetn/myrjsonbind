@@ -7,6 +7,9 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -28,8 +31,15 @@ import jakarta.json.stream.JsonParser;
 import jakarta.json.stream.JsonParser.Event;
 import se.narstrom.myr.json.bind.MyrJsonbContext;
 import se.narstrom.myr.json.bind.reflect.ReflectionUtilities;
+import se.narstrom.myr.json.bind.serializer.time.JavaTimeSerializer;
 
 public class DefaultDeserializer implements JsonbDeserializer<Object> {
+	// @formatter:off
+	private Map<Class<?>, PropertyDeserializer<?>> propertyDeserializers = Map.ofEntries(
+			Map.entry(LocalDateTime.class, new JavaTimeSerializer<>(DateTimeFormatter.ISO_DATE_TIME, LocalDateTime::from)),
+			Map.entry(LocalDate.class, new JavaTimeSerializer<>(DateTimeFormatter.ISO_DATE, LocalDate::from)) 
+	);
+	// @formatter:on
 
 	@Override
 	public Object deserialize(final JsonParser parser, final DeserializationContext context, final Type type) {
@@ -52,7 +62,11 @@ public class DefaultDeserializer implements JsonbDeserializer<Object> {
 
 		final Executable creator = findCreator(concreteClazz);
 		final SequencedMap<String, CreatorProperty> creatorProperties = findCreatorProperties(type, creator);
-		final Map<String, WriteableProperty> properties = findProperties(concreteType, concreteClazz);
+		final Map<String, WriteableProperty> writeableProperties = findProperties(concreteType, concreteClazz);
+
+		final Map<String, Property> properties = new HashMap<>();
+		properties.putAll(writeableProperties);
+		properties.putAll(creatorProperties);
 
 		final JsonProvider jsonp = ((MyrJsonbContext) context).getJsonpProvider();
 		final JsonParser objectParser = jsonp.createParserFactory(null).createParser(jsonObject);
@@ -65,7 +79,7 @@ public class DefaultDeserializer implements JsonbDeserializer<Object> {
 			assert event == Event.KEY_NAME;
 			final String name = objectParser.getString();
 
-			final WriteableProperty property = properties.get(name);
+			final Property property = properties.get(name);
 
 			if (property == null) {
 				if (((MyrJsonbContext) context).getConfig().getProperty("jsonb.fail-on-unknown-properties").orElse(Boolean.FALSE) == Boolean.TRUE)
@@ -75,7 +89,7 @@ public class DefaultDeserializer implements JsonbDeserializer<Object> {
 				continue;
 			}
 
-			final Object value = context.deserialize(property.type(), objectParser);
+			final Object value = deserializeProperty(objectParser, (MyrJsonbContext) context, property);
 			values.put(name, value);
 		}
 
@@ -99,15 +113,26 @@ public class DefaultDeserializer implements JsonbDeserializer<Object> {
 			}
 
 			for (final Map.Entry<String, Object> entry : values.entrySet()) {
-				final WriteableProperty property = properties.get(entry.getKey());
-				final Object value = entry.getValue();
-				property.set(object, value);
+				final Property property = properties.get(entry.getKey());
+				if (property instanceof WriteableProperty writeableProperty) {
+					final Object value = entry.getValue();
+					writeableProperty.set(object, value);
+				}
 			}
 
 			return object;
 		} catch (final ReflectiveOperationException ex) {
 			throw new JsonbException("Reflective operation error", ex);
 		}
+	}
+
+	private Object deserializeProperty(final JsonParser parser, final MyrJsonbContext context, final Property property) {
+		final PropertyDeserializer<?> deserializer = propertyDeserializers.get(ReflectionUtilities.getRawType(property.type()));
+		if (deserializer != null) {
+			parser.next();
+			return deserializer.deserializeProperty(parser, context, property);
+		} else
+			return context.deserialize(property.type(), parser);
 	}
 
 	private Type findConcreteType(final JsonObject object, final Class<?> clazz, final Type type) {

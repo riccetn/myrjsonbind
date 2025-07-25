@@ -11,6 +11,7 @@ import java.util.Optional;
 
 import jakarta.json.bind.JsonbConfig;
 import jakarta.json.bind.JsonbException;
+import jakarta.json.bind.annotation.JsonbDateFormat;
 import jakarta.json.bind.serializer.DeserializationContext;
 import jakarta.json.bind.serializer.JsonbDeserializer;
 import jakarta.json.bind.serializer.JsonbSerializer;
@@ -36,6 +37,24 @@ public final class JavaTimeSerializer<T extends TemporalAccessor> implements Jso
 	public T deserialize(final JsonParser parser, final DeserializationContext context, final Type type) {
 		final DateTimeFormatter formatter = findFormatter((MyrJsonbContext) context);
 
+		return deserializeInternal(parser, (MyrJsonbContext) context, formatter);
+	}
+
+	@Override
+	public T deserializeProperty(final JsonParser parser, final MyrJsonbContext context, final Property property) {
+		final JsonbDateFormat annotation = property.getAnnotation(JsonbDateFormat.class);
+
+		final DateTimeFormatter formatter;
+		if (annotation != null) {
+			formatter = DateTimeFormatter.ofPattern(annotation.value(), Locale.forLanguageTag(annotation.locale()));
+		} else {
+			formatter = findFormatter(context);
+		}
+
+		return deserializeInternal(parser, context, formatter);
+	}
+
+	private T deserializeInternal(final JsonParser parser, final MyrJsonbContext context, final DateTimeFormatter formatter) {
 		if (parser.currentEvent() != Event.VALUE_STRING)
 			throw new JsonbException("Not a string");
 		try {
@@ -43,12 +62,6 @@ public final class JavaTimeSerializer<T extends TemporalAccessor> implements Jso
 		} catch (final DateTimeParseException ex) {
 			throw new JsonbException(ex.getMessage(), ex);
 		}
-	}
-
-	@Override
-	public T deserializeProperty(final JsonParser parser, final MyrJsonbContext context, final Property property) {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 	@Override
