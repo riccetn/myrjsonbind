@@ -45,18 +45,6 @@
 			<artifactId>jakarta.json.bind-api</artifactId>
 		</dependency>
 
-		<dependency>
-			<groupId>se.narstrom.myr</groupId>
-			<artifactId>myrjson</artifactId>
-			<version>0.1.0</version>
-			<scope>test</scope>
-		</dependency>
-<!--		<dependency>-->
-<!--			<groupId>org.eclipse.parsson</groupId>-->
-<!--			<artifactId>parsson</artifactId>-->
-<!--			<version>1.1.7</version>-->
-<!--		</dependency>-->
-
 		<!-- TEST DEPENDENCIES -->
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
@@ -119,4 +107,33 @@
 			</plugin>
 		</plugins>
 	</build>
+
+	<!-- JSON-P implementation used when running the tests -->
+	<profiles>
+		<profile>
+			<id>myrjson</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<dependencies>
+				<dependency>
+					<groupId>se.narstrom.myr</groupId>
+					<artifactId>myrjson</artifactId>
+					<version>0.1.0</version>
+					<scope>test</scope>
+				</dependency>
+			</dependencies>
+		</profile>
+		<profile>
+			<id>parsson</id>
+			<dependencies>
+				<dependency>
+					<groupId>org.eclipse.parsson</groupId>
+					<artifactId>parsson</artifactId>
+					<version>1.1.9</version>
+					<scope>test</scope>
+				</dependency>
+			</dependencies>
+		</profile>
+	</profiles>
 </project>
