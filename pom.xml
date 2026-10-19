@@ -6,6 +6,16 @@
 	<artifactId>myrjsonbind</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 
+	<repositories>
+		<repository>
+			<id>github-myrjson</id>
+			<url>https://maven.pkg.github.com/riccetn/myrjson</url>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+	</repositories>
+
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
@@ -38,7 +48,7 @@
 		<dependency>
 			<groupId>se.narstrom.myr</groupId>
 			<artifactId>myrjson</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>0.1.0</version>
 			<scope>test</scope>
 		</dependency>
 <!--		<dependency>-->
