@@ -1,7 +1,15 @@
 version: 2
+registries:
+  github-myrjson:
+    type: maven-repository
+    url: https://maven.pkg.github.com/riccetn/myrjson
+    username: riccetn
+    password: ${{ secrets.PACKAGES_TOKEN }}
 updates:
   - package-ecosystem: maven
     directory: /
+    registries:
+      - github-myrjson
     schedule:
       interval: weekly
   - package-ecosystem: github-actions
