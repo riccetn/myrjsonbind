@@ -1,0 +1,2 @@
+ee/jakarta/tck/json/bind/api/jsonbadapter/JsonbAdapterTest#testAdaptFromJson
+ee/jakarta/tck/json/bind/defaultmapping/jsonptypes/JSONPTypesMappingTest#testJsonObjectMapping+testEmptyJsonObjectMapping+testJsonArrayMapping+testEmptyJsonArrayMapping+testJsonObjectStructureMapping+testJsonArrayStructureMapping+testJsonValueMapping
