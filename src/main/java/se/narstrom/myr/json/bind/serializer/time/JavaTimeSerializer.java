@@ -20,8 +20,8 @@ import jakarta.json.stream.JsonGenerator;
 import jakarta.json.stream.JsonParser;
 import jakarta.json.stream.JsonParser.Event;
 import se.narstrom.myr.json.bind.MyrJsonbContext;
-import se.narstrom.myr.json.bind.serializer.defaults.Property;
-import se.narstrom.myr.json.bind.serializer.defaults.PropertyDeserializer;
+import se.narstrom.myr.json.bind.serializer.defaults.deserializer.Property;
+import se.narstrom.myr.json.bind.serializer.defaults.deserializer.PropertyDeserializer;
 
 public final class JavaTimeSerializer<T extends TemporalAccessor> implements JsonbSerializer<T>, JsonbDeserializer<T>, PropertyDeserializer<T> {
 	private final DateTimeFormatter defaultFormatter;

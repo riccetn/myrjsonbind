@@ -1,4 +1,4 @@
-package se.narstrom.myr.json.bind.serializer.defaults;
+package se.narstrom.myr.json.bind.serializer.defaults.deserializer;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;

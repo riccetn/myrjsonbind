@@ -1,4 +1,4 @@
-package se.narstrom.myr.json.bind.serializer.defaults;
+package se.narstrom.myr.json.bind.serializer.defaults.serializer;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -31,20 +31,17 @@ public final class Properties {
 		// @formatter:on
 	}
 
-	private static void listGettersAndSetters(final Class<?> rawBeanType, final Map<String, Method> getters, final Map<String, Method> setters) {
+	private static Map<String, Method> listGetters(final Class<?> rawBeanType) {
+		final Map<String, Method> getters = new HashMap<>();
 		for (final Method method : rawBeanType.getDeclaredMethods()) {
 			if (isGetter(method)) {
 				final String name = beanPropertyNameFromMethodName(method.getName());
 				final Method oldMethod;
 				if ((oldMethod = getters.putIfAbsent(name, method)) != null)
 					throw new JsonbException("Multiple getters with the same name " + oldMethod + " vs " + method);
-			} else if (isSetter(method)) {
-				final String name = beanPropertyNameFromMethodName(method.getName());
-				final Method oldMethod;
-				if ((oldMethod = setters.putIfAbsent(name, method)) != null)
-					throw new JsonbException("Multiple setters with the same name " + oldMethod + " vs " + method);
 			}
 		}
+		return getters;
 	}
 
 	private static boolean isGetter(final Method method) {
@@ -54,15 +51,6 @@ public final class Properties {
 				!method.isSynthetic() && !method.isBridge() &&
 				method.getParameterCount() == 0 &&
 				method.getReturnType() != Void.TYPE;
-		// @formatter:on
-	}
-
-	private static boolean isSetter(final Method method) {
-		// @formatter:off
-		return method.getName().startsWith("set") &&
-				Character.isUpperCase(method.getName().codePointAt(3)) &&
-				!method.isSynthetic() && !method.isBridge() &&
-				method.getParameterCount() == 1;
 		// @formatter:on
 	}
 
@@ -81,10 +69,9 @@ public final class Properties {
 		return Character.toString(Character.toLowerCase(firstCodePoint)) + rest;
 	}
 
-	private static String getPropertyName(final String name, final Field field, final Method getter, final Method setter) {
+	private static String getPropertyName(final String name, final Field field, final Method getter) {
 		final JsonbProperty fieldAnnotation = (field != null) ? field.getAnnotation(JsonbProperty.class) : null;
 		final JsonbProperty getterAnnotation = (getter != null) ? getter.getAnnotation(JsonbProperty.class) : null;
-		final JsonbProperty setterAnnotation = (setter != null) ? setter.getAnnotation(JsonbProperty.class) : null;
 
 		String propertyName = null;
 		if (fieldAnnotation != null)
@@ -96,30 +83,22 @@ public final class Properties {
 			propertyName = getterAnnotation.value();
 		}
 
-		if (setterAnnotation != null) {
-			if (propertyName != null && !Objects.equals(propertyName, setterAnnotation.value()))
-				throw new JsonbException("Conflicting annotations for property " + name);
-			propertyName = setterAnnotation.value();
-		}
-
 		if (propertyName == null)
 			return name;
 
 		return propertyName;
 	}
 
-	private static Type getUnresolvedPropertyType(final Field field, final Method getter, final Method setter) {
+	private static Type getUnresolvedPropertyType(final Field field, final Method getter) {
 		if (field != null)
 			return field.getGenericType();
 		else if (getter != null)
 			return getter.getGenericReturnType();
-		else if (setter != null)
-			return setter.getGenericParameterTypes()[0];
 		else
 			throw new AssertionError("Unreachable");
 	}
 
-	public static SequencedMap<String, OldProperty> getProperties(final Type beanType) {
+	public static SequencedMap<String, Property> getProperties(final Type beanType) {
 		final Class<?> rawType = ReflectionUtilities.getRawType(beanType);
 
 		if (rawType.isAnnotation() || rawType.isArray() || rawType.isEnum() || rawType.isInterface() || rawType.isPrimitive() || rawType.isSynthetic())
@@ -128,30 +107,26 @@ public final class Properties {
 		if (rawType == Object.class)
 			return new LinkedHashMap<>();
 
-		final SequencedMap<String, OldProperty> superProperties = getProperties(ReflectionUtilities.getSuperType(beanType));
+		final SequencedMap<String, Property> superProperties = getProperties(ReflectionUtilities.getSuperType(beanType));
 
 		final Set<String> blacklist = new HashSet<>();
 		blacklist.addAll(superProperties.keySet());
 
-		final SortedMap<String, OldProperty> localProperties = new TreeMap<>();
+		final SortedMap<String, Property> localProperties = new TreeMap<>();
 
 		final Map<String, Field> fields = listFields(rawType);
-		final Map<String, Method> getters = new HashMap<>();
-		final Map<String, Method> setters = new HashMap<>();
-		listGettersAndSetters(rawType, getters, setters);
+		final Map<String, Method> getters = listGetters(rawType);
 
 		final Set<String> names = new HashSet<>();
 		names.addAll(fields.keySet());
 		names.addAll(getters.keySet());
-		names.addAll(setters.keySet());
 
 		for (final String fieldName : names) {
 
 			final Field field = fields.get(fieldName);
 			final Method getter = getters.get(fieldName);
-			final Method setter = setters.get(fieldName);
 
-			final String propertyName = getPropertyName(fieldName, field, getter, setter);
+			final String propertyName = getPropertyName(fieldName, field, getter);
 
 			if (blacklist.contains(propertyName))
 				continue;
@@ -175,27 +150,16 @@ public final class Properties {
 				}
 			}
 
-			if (setter != null) {
-				final int modifiers = setter.getModifiers();
-				if (Modifier.isStatic(modifiers)) {
-					blacklist.add(propertyName);
-					continue;
-				}
-			}
-
-			final Type unresolvedPropertyType = getUnresolvedPropertyType(field, getter, setter);
+			final Type unresolvedPropertyType = getUnresolvedPropertyType(field, getter);
 			final Type propertyType = ReflectionUtilities.resolveType(unresolvedPropertyType, beanType);
 
-			if (getter != null || setter != null) {
+			if (getter != null) {
 				final boolean publicGetter = getter != null && Modifier.isPublic(getter.getModifiers());
-				final boolean publicSetter = setter != null && Modifier.isPublic(setter.getModifiers());
 
-				if (!publicGetter && !publicSetter) {
+				if (!publicGetter) {
 					blacklist.add(propertyName);
 					continue;
 				}
-
-				localProperties.put(propertyName, new OldProperty(propertyType, propertyName, null, getter, setter));
 			} else {
 				assert field != null;
 
@@ -203,12 +167,11 @@ public final class Properties {
 					blacklist.add(propertyName);
 					continue;
 				}
-
-				localProperties.put(propertyName, new OldProperty(propertyType, propertyName, field, null, null));
 			}
+			localProperties.put(propertyName, new Property(beanType, propertyType, propertyName, field, getter));
 		}
 
-		final SequencedMap<String, OldProperty> properties = new LinkedHashMap<>();
+		final SequencedMap<String, Property> properties = new LinkedHashMap<>();
 		properties.putAll(superProperties);
 		properties.putAll(localProperties);
 

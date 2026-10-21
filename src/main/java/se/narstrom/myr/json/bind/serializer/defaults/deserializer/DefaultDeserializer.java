@@ -1,4 +1,4 @@
-package se.narstrom.myr.json.bind.serializer.defaults;
+package se.narstrom.myr.json.bind.serializer.defaults.deserializer;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Executable;

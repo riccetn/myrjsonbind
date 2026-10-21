@@ -1,4 +1,4 @@
-package se.narstrom.myr.json.bind.serializer.defaults;
+package se.narstrom.myr.json.bind.serializer.defaults.serializer;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -59,7 +59,7 @@ public final class DefaultSerializer implements JsonbSerializer<Object> {
 	}
 
 	private void serializeProperties(final Object object, final Class<?> clazz, final JsonGenerator generator, final SerializationContext context, final Set<String> blacklist) {
-		final SequencedMap<String, OldProperty> properties = Properties.getProperties(clazz);
+		final SequencedMap<String, Property> properties = Properties.getProperties(clazz);
 
 		for (final String properyName : properties.keySet()) {
 			if (blacklist.contains(properyName))
@@ -68,7 +68,7 @@ public final class DefaultSerializer implements JsonbSerializer<Object> {
 
 		final boolean writeNulls = getWriteNulls(context);
 
-		for (final OldProperty property : properties.values()) {
+		for (final Property property : properties.values()) {
 			final Object value = property.getValue(object);
 
 			if (!writeNulls && isNullOrEmptyOptional(value))
