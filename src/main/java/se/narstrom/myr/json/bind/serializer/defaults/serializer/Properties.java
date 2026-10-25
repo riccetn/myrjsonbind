@@ -20,6 +20,7 @@ import java.util.stream.Stream;
 import jakarta.json.bind.JsonbException;
 import jakarta.json.bind.annotation.JsonbProperty;
 import se.narstrom.myr.json.bind.reflect.ReflectionUtilities;
+import se.narstrom.myr.json.bind.serializer.defaults.prioperty.ReadableProperty;
 
 public final class Properties {
 
@@ -98,7 +99,7 @@ public final class Properties {
 			throw new AssertionError("Unreachable");
 	}
 
-	public static SequencedMap<String, Property> getProperties(final Type beanType) {
+	public static SequencedMap<String, ReadableProperty> getProperties(final Type beanType) {
 		final Class<?> rawType = ReflectionUtilities.getRawType(beanType);
 
 		if (rawType.isAnnotation() || rawType.isArray() || rawType.isEnum() || rawType.isInterface() || rawType.isPrimitive() || rawType.isSynthetic())
@@ -107,12 +108,12 @@ public final class Properties {
 		if (rawType == Object.class)
 			return new LinkedHashMap<>();
 
-		final SequencedMap<String, Property> superProperties = getProperties(ReflectionUtilities.getSuperType(beanType));
+		final SequencedMap<String, ReadableProperty> superProperties = getProperties(ReflectionUtilities.getSuperType(beanType));
 
 		final Set<String> blacklist = new HashSet<>();
 		blacklist.addAll(superProperties.keySet());
 
-		final SortedMap<String, Property> localProperties = new TreeMap<>();
+		final SortedMap<String, ReadableProperty> localProperties = new TreeMap<>();
 
 		final Map<String, Field> fields = listFields(rawType);
 		final Map<String, Method> getters = listGetters(rawType);
@@ -168,10 +169,10 @@ public final class Properties {
 					continue;
 				}
 			}
-			localProperties.put(propertyName, new Property(beanType, propertyType, propertyName, field, getter));
+			localProperties.put(propertyName, new ReadableProperty(beanType, propertyType, propertyName, field, getter));
 		}
 
-		final SequencedMap<String, Property> properties = new LinkedHashMap<>();
+		final SequencedMap<String, ReadableProperty> properties = new LinkedHashMap<>();
 		properties.putAll(superProperties);
 		properties.putAll(localProperties);
 

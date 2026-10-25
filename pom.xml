@@ -79,6 +79,7 @@
 						<dependency>jakarta.json.bind:jakarta.json.bind-tck</dependency>
 					</dependenciesToScan>
 					<includes>
+						<!-- <include>ee.jakarta.tck.json.bind.api.annotation.**</include> -->
 						<include>ee.jakarta.tck.json.bind.api.builder.**</include>
 						<include>ee.jakarta.tck.json.bind.api.config.**</include>
 						<include>ee.jakarta.tck.json.bind.api.exception.**</include>

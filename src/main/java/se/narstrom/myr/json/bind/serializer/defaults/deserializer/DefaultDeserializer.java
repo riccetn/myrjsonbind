@@ -31,6 +31,11 @@ import jakarta.json.stream.JsonParser;
 import jakarta.json.stream.JsonParser.Event;
 import se.narstrom.myr.json.bind.MyrJsonbContext;
 import se.narstrom.myr.json.bind.reflect.ReflectionUtilities;
+import se.narstrom.myr.json.bind.serializer.defaults.prioperty.CreatorProperty;
+import se.narstrom.myr.json.bind.serializer.defaults.prioperty.FieldProperty;
+import se.narstrom.myr.json.bind.serializer.defaults.prioperty.Property;
+import se.narstrom.myr.json.bind.serializer.defaults.prioperty.SetterProperty;
+import se.narstrom.myr.json.bind.serializer.defaults.prioperty.WriteableProperty;
 import se.narstrom.myr.json.bind.serializer.time.JavaTimeSerializer;
 
 public class DefaultDeserializer implements JsonbDeserializer<Object> {

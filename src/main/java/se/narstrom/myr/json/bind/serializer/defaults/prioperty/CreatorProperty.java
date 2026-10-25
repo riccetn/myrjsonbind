@@ -1,4 +1,4 @@
-package se.narstrom.myr.json.bind.serializer.defaults.deserializer;
+package se.narstrom.myr.json.bind.serializer.defaults.prioperty;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Executable;

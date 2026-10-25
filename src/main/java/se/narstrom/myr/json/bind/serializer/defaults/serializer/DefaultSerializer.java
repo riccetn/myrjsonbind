@@ -1,8 +1,12 @@
 package se.narstrom.myr.json.bind.serializer.defaults.serializer;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
@@ -18,8 +22,16 @@ import jakarta.json.bind.serializer.JsonbSerializer;
 import jakarta.json.bind.serializer.SerializationContext;
 import jakarta.json.stream.JsonGenerator;
 import se.narstrom.myr.json.bind.MyrJsonbContext;
+import se.narstrom.myr.json.bind.reflect.ReflectionUtilities;
+import se.narstrom.myr.json.bind.serializer.defaults.prioperty.ReadableProperty;
+import se.narstrom.myr.json.bind.serializer.time.DateSerializer;
+import se.narstrom.myr.json.bind.serializer.time.JavaTimeSerializer;
 
 public final class DefaultSerializer implements JsonbSerializer<Object> {
+	private final Map<Class<?>, PropertySerializer<?>> propertySerializers = Map.ofEntries(
+			Map.entry(Date.class, new DateSerializer()),
+			Map.entry(LocalDateTime.class, new JavaTimeSerializer<>(DateTimeFormatter.ISO_DATE_TIME, LocalDateTime::from))
+	);
 
 	@Override
 	public void serialize(final Object object, final JsonGenerator generator, final SerializationContext context) {
@@ -59,7 +71,7 @@ public final class DefaultSerializer implements JsonbSerializer<Object> {
 	}
 
 	private void serializeProperties(final Object object, final Class<?> clazz, final JsonGenerator generator, final SerializationContext context, final Set<String> blacklist) {
-		final SequencedMap<String, Property> properties = Properties.getProperties(clazz);
+		final SequencedMap<String, ReadableProperty> properties = Properties.getProperties(clazz);
 
 		for (final String properyName : properties.keySet()) {
 			if (blacklist.contains(properyName))
@@ -68,13 +80,20 @@ public final class DefaultSerializer implements JsonbSerializer<Object> {
 
 		final boolean writeNulls = getWriteNulls(context);
 
-		for (final Property property : properties.values()) {
+		for (final ReadableProperty property : properties.values()) {
 			final Object value = property.getValue(object);
 
 			if (!writeNulls && isNullOrEmptyOptional(value))
 				continue;
 
-			context.serialize(property.name(), value, generator);
+			final PropertySerializer<?> propertySerializer = propertySerializers.get(ReflectionUtilities.getRawType(property.type()));
+			if(propertySerializer != null) {
+				generator.writeKey(property.name());
+				((PropertySerializer<Object>) propertySerializer).serializeProperty(value, generator, (MyrJsonbContext) context, property);
+			} else {
+
+				context.serialize(property.name(), value, generator);
+			}
 		}
 	}
 

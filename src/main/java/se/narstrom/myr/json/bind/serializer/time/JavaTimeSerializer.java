@@ -20,10 +20,12 @@ import jakarta.json.stream.JsonGenerator;
 import jakarta.json.stream.JsonParser;
 import jakarta.json.stream.JsonParser.Event;
 import se.narstrom.myr.json.bind.MyrJsonbContext;
-import se.narstrom.myr.json.bind.serializer.defaults.deserializer.Property;
 import se.narstrom.myr.json.bind.serializer.defaults.deserializer.PropertyDeserializer;
+import se.narstrom.myr.json.bind.serializer.defaults.prioperty.Property;
+import se.narstrom.myr.json.bind.serializer.defaults.prioperty.ReadableProperty;
+import se.narstrom.myr.json.bind.serializer.defaults.serializer.PropertySerializer;
 
-public final class JavaTimeSerializer<T extends TemporalAccessor> implements JsonbSerializer<T>, JsonbDeserializer<T>, PropertyDeserializer<T> {
+public final class JavaTimeSerializer<T extends TemporalAccessor> implements JsonbSerializer<T>, PropertySerializer<T>, JsonbDeserializer<T>, PropertyDeserializer<T> {
 	private final DateTimeFormatter defaultFormatter;
 
 	private final TemporalQuery<T> temporalQuery;
@@ -68,6 +70,22 @@ public final class JavaTimeSerializer<T extends TemporalAccessor> implements Jso
 	public void serialize(final T obj, final JsonGenerator generator, final SerializationContext context) {
 		final DateTimeFormatter formatter = findFormatter((MyrJsonbContext) context);
 
+		serializeInternal(obj, generator, formatter);
+	}
+
+	public void serializeProperty(final T obj, final JsonGenerator generator, final MyrJsonbContext context, final ReadableProperty property) {
+		final JsonbDateFormat annotation = property.getAnnotation(JsonbDateFormat.class);
+
+		final DateTimeFormatter formatter;
+		if (annotation != null)
+			formatter = DateTimeFormatter.ofPattern(annotation.value(), Locale.forLanguageTag(annotation.locale()));
+		else
+			formatter = findFormatter(context);
+
+		serializeInternal(obj, generator, formatter);
+	}
+
+	private void serializeInternal(final T obj, final JsonGenerator generator, final DateTimeFormatter formatter) {
 		try {
 			generator.write(formatter.format(obj));
 		} catch (final DateTimeException ex) {
