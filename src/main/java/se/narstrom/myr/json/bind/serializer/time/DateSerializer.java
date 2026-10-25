@@ -21,8 +21,8 @@ import jakarta.json.stream.JsonGenerator;
 import jakarta.json.stream.JsonParser;
 import jakarta.json.stream.JsonParser.Event;
 import se.narstrom.myr.json.bind.MyrJsonbContext;
-import se.narstrom.myr.json.bind.serializer.defaults.prioperty.ReadableProperty;
-import se.narstrom.myr.json.bind.serializer.defaults.serializer.PropertySerializer;
+import se.narstrom.myr.json.bind.property.PropertySerializer;
+import se.narstrom.myr.json.bind.property.ReadableProperty;
 
 // https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#java-util-date-calendar-gregoriancalendar
 public final class DateSerializer implements JsonbSerializer<Date>, PropertySerializer<Date>, JsonbDeserializer<Date> {

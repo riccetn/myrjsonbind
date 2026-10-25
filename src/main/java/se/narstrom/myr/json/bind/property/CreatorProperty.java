@@ -1,4 +1,4 @@
-package se.narstrom.myr.json.bind.serializer.defaults.prioperty;
+package se.narstrom.myr.json.bind.property;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Executable;
@@ -6,7 +6,7 @@ import java.lang.reflect.Type;
 
 import se.narstrom.myr.json.bind.reflect.ReflectionUtilities;
 
-public record CreatorProperty(Type beanType, Executable creator, int index) implements Property {
+public record CreatorProperty(Type beanType, String name, Executable creator, int index) implements Property {
 	@Override
 	public Type type() {
 		return ReflectionUtilities.resolveType(creator.getGenericParameterTypes()[index], beanType());

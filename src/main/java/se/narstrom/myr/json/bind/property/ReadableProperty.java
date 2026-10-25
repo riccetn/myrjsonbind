@@ -1,4 +1,4 @@
-package se.narstrom.myr.json.bind.serializer.defaults.prioperty;
+package se.narstrom.myr.json.bind.property;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;

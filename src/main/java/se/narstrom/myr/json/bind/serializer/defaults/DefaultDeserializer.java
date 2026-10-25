@@ -1,4 +1,4 @@
-package se.narstrom.myr.json.bind.serializer.defaults.deserializer;
+package se.narstrom.myr.json.bind.serializer.defaults;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Executable;
@@ -30,12 +30,13 @@ import jakarta.json.spi.JsonProvider;
 import jakarta.json.stream.JsonParser;
 import jakarta.json.stream.JsonParser.Event;
 import se.narstrom.myr.json.bind.MyrJsonbContext;
+import se.narstrom.myr.json.bind.property.CreatorProperty;
+import se.narstrom.myr.json.bind.property.FieldProperty;
+import se.narstrom.myr.json.bind.property.Property;
+import se.narstrom.myr.json.bind.property.PropertyDeserializer;
+import se.narstrom.myr.json.bind.property.SetterProperty;
+import se.narstrom.myr.json.bind.property.WriteableProperty;
 import se.narstrom.myr.json.bind.reflect.ReflectionUtilities;
-import se.narstrom.myr.json.bind.serializer.defaults.prioperty.CreatorProperty;
-import se.narstrom.myr.json.bind.serializer.defaults.prioperty.FieldProperty;
-import se.narstrom.myr.json.bind.serializer.defaults.prioperty.Property;
-import se.narstrom.myr.json.bind.serializer.defaults.prioperty.SetterProperty;
-import se.narstrom.myr.json.bind.serializer.defaults.prioperty.WriteableProperty;
 import se.narstrom.myr.json.bind.serializer.time.JavaTimeSerializer;
 
 public class DefaultDeserializer implements JsonbDeserializer<Object> {
@@ -121,7 +122,7 @@ public class DefaultDeserializer implements JsonbDeserializer<Object> {
 				final Property property = properties.get(entry.getKey());
 				if (property instanceof WriteableProperty writeableProperty) {
 					final Object value = entry.getValue();
-					writeableProperty.set(object, value);
+					writeableProperty.setValue(object, value);
 				}
 			}
 
@@ -235,7 +236,7 @@ public class DefaultDeserializer implements JsonbDeserializer<Object> {
 			else
 				name = parameter.getName();
 
-			if (properties.put(name, new CreatorProperty(beanType, creator, index++)) != null)
+			if (properties.put(name, new CreatorProperty(beanType, name, creator, index++)) != null)
 				throw new JsonbException("Duplicate property name");
 		}
 
@@ -324,11 +325,11 @@ public class DefaultDeserializer implements JsonbDeserializer<Object> {
 			final WriteableProperty property;
 			if (setter != null) {
 				if (Modifier.isPublic(setter.getModifiers()))
-					property = new SetterProperty(beanType, setter);
+					property = new SetterProperty(beanType, name, setter);
 				else
 					continue;
 			} else if (field != null && Modifier.isPublic(field.getModifiers())) {
-				property = new FieldProperty(beanType, field);
+				property = new FieldProperty(beanType, name, field);
 			} else {
 				continue;
 			}

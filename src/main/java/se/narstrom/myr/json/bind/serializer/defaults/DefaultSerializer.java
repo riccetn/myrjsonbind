@@ -1,4 +1,4 @@
-package se.narstrom.myr.json.bind.serializer.defaults.serializer;
+package se.narstrom.myr.json.bind.serializer.defaults;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -23,9 +23,11 @@ import jakarta.json.bind.serializer.JsonbSerializer;
 import jakarta.json.bind.serializer.SerializationContext;
 import jakarta.json.stream.JsonGenerator;
 import se.narstrom.myr.json.bind.MyrJsonbContext;
+import se.narstrom.myr.json.bind.property.Properties;
+import se.narstrom.myr.json.bind.property.PropertySerializer;
+import se.narstrom.myr.json.bind.property.ReadableProperty;
 import se.narstrom.myr.json.bind.reflect.ReflectionUtilities;
 import se.narstrom.myr.json.bind.serializer.basic.DoubleSerializer;
-import se.narstrom.myr.json.bind.serializer.defaults.prioperty.ReadableProperty;
 import se.narstrom.myr.json.bind.serializer.time.DateSerializer;
 import se.narstrom.myr.json.bind.serializer.time.JavaTimeSerializer;
 

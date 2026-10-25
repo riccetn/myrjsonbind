@@ -1,4 +1,4 @@
-package se.narstrom.myr.json.bind.serializer.defaults.serializer;
+package se.narstrom.myr.json.bind.property;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -20,7 +20,6 @@ import java.util.stream.Stream;
 import jakarta.json.bind.JsonbException;
 import jakarta.json.bind.annotation.JsonbProperty;
 import se.narstrom.myr.json.bind.reflect.ReflectionUtilities;
-import se.narstrom.myr.json.bind.serializer.defaults.prioperty.ReadableProperty;
 
 public final class Properties {
 

@@ -7,8 +7,8 @@ import jakarta.json.bind.serializer.JsonbSerializer;
 import jakarta.json.bind.serializer.SerializationContext;
 import jakarta.json.stream.JsonGenerator;
 import se.narstrom.myr.json.bind.MyrJsonbContext;
-import se.narstrom.myr.json.bind.serializer.defaults.prioperty.ReadableProperty;
-import se.narstrom.myr.json.bind.serializer.defaults.serializer.PropertySerializer;
+import se.narstrom.myr.json.bind.property.PropertySerializer;
+import se.narstrom.myr.json.bind.property.ReadableProperty;
 
 public interface AbstractNumberSerializer<T extends Number> extends JsonbSerializer<T>, PropertySerializer<T> {
 
