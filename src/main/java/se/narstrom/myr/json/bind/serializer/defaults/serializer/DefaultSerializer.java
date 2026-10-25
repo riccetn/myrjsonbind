@@ -16,6 +16,7 @@ import java.util.Set;
 
 import jakarta.json.bind.JsonbConfig;
 import jakarta.json.bind.JsonbException;
+import jakarta.json.bind.annotation.JsonbNillable;
 import jakarta.json.bind.annotation.JsonbSubtype;
 import jakarta.json.bind.annotation.JsonbTypeInfo;
 import jakarta.json.bind.serializer.JsonbSerializer;
@@ -83,7 +84,10 @@ public final class DefaultSerializer implements JsonbSerializer<Object> {
 		for (final ReadableProperty property : properties.values()) {
 			final Object value = property.getValue(object);
 
-			if (!writeNulls && isNullOrEmptyOptional(value))
+			final JsonbNillable jsonbNillable = property.getAnnotation(JsonbNillable.class);
+			final boolean nillable = (jsonbNillable != null) ? jsonbNillable.value() : writeNulls;
+
+			if (!nillable && isNullOrEmptyOptional(value))
 				continue;
 
 			final PropertySerializer<?> propertySerializer = propertySerializers.get(ReflectionUtilities.getRawType(property.type()));
