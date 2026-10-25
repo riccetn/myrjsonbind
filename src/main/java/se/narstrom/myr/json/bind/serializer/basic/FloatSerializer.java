@@ -6,14 +6,12 @@ import java.math.BigDecimal;
 import jakarta.json.bind.JsonbException;
 import jakarta.json.bind.serializer.DeserializationContext;
 import jakarta.json.bind.serializer.JsonbDeserializer;
-import jakarta.json.bind.serializer.JsonbSerializer;
-import jakarta.json.bind.serializer.SerializationContext;
 import jakarta.json.stream.JsonGenerator;
 import jakarta.json.stream.JsonParser;
 import jakarta.json.stream.JsonParser.Event;
 
 // https://jakarta.ee/specifications/jsonb/3.0/jakarta-jsonb-spec-3.0#java-lang-byte-short-integer-long-float-double
-public final class FloatSerializer implements JsonbSerializer<Float>, JsonbDeserializer<Float> {
+public final class FloatSerializer implements AbstractNumberSerializer<Float>, JsonbDeserializer<Float> {
 
 	@Override
 	public Float deserialize(final JsonParser parser, final DeserializationContext ctx, final Type type) {
@@ -23,8 +21,8 @@ public final class FloatSerializer implements JsonbSerializer<Float>, JsonbDeser
 	}
 
 	@Override
-	public void serialize(final Float obj, final JsonGenerator generator, final SerializationContext ctx) {
-		generator.write(new BigDecimal(obj.toString()));
+	public void write(final Float number, final JsonGenerator generator) {
+		generator.write(new BigDecimal(number.toString()));
 	}
 
 }

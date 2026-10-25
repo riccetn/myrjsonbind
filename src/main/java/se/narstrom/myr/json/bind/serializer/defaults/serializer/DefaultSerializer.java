@@ -24,12 +24,15 @@ import jakarta.json.bind.serializer.SerializationContext;
 import jakarta.json.stream.JsonGenerator;
 import se.narstrom.myr.json.bind.MyrJsonbContext;
 import se.narstrom.myr.json.bind.reflect.ReflectionUtilities;
+import se.narstrom.myr.json.bind.serializer.basic.DoubleSerializer;
 import se.narstrom.myr.json.bind.serializer.defaults.prioperty.ReadableProperty;
 import se.narstrom.myr.json.bind.serializer.time.DateSerializer;
 import se.narstrom.myr.json.bind.serializer.time.JavaTimeSerializer;
 
 public final class DefaultSerializer implements JsonbSerializer<Object> {
 	private final Map<Class<?>, PropertySerializer<?>> propertySerializers = Map.ofEntries(
+			Map.entry(Double.TYPE, new DoubleSerializer()),
+			Map.entry(Double.class, new DoubleSerializer()),
 			Map.entry(Date.class, new DateSerializer()),
 			Map.entry(LocalDateTime.class, new JavaTimeSerializer<>(DateTimeFormatter.ISO_DATE_TIME, LocalDateTime::from))
 	);
