@@ -7,9 +7,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,20 +30,11 @@ import se.narstrom.myr.json.bind.MyrJsonbContext;
 import se.narstrom.myr.json.bind.property.CreatorProperty;
 import se.narstrom.myr.json.bind.property.FieldProperty;
 import se.narstrom.myr.json.bind.property.Property;
-import se.narstrom.myr.json.bind.property.PropertyDeserializer;
 import se.narstrom.myr.json.bind.property.SetterProperty;
 import se.narstrom.myr.json.bind.property.WriteableProperty;
 import se.narstrom.myr.json.bind.reflect.ReflectionUtilities;
-import se.narstrom.myr.json.bind.serializer.time.JavaTimeSerializer;
 
 public class DefaultDeserializer implements JsonbDeserializer<Object> {
-	// @formatter:off
-	private Map<Class<?>, PropertyDeserializer<?>> propertyDeserializers = Map.ofEntries(
-			Map.entry(LocalDateTime.class, new JavaTimeSerializer<>(DateTimeFormatter.ISO_DATE_TIME, LocalDateTime::from)),
-			Map.entry(LocalDate.class, new JavaTimeSerializer<>(DateTimeFormatter.ISO_DATE, LocalDate::from)) 
-	);
-	// @formatter:on
-
 	@Override
 	public Object deserialize(final JsonParser parser, final DeserializationContext context, final Type type) {
 		final Class<?> clazz = ReflectionUtilities.getRawType(type);
@@ -95,7 +83,7 @@ public class DefaultDeserializer implements JsonbDeserializer<Object> {
 				continue;
 			}
 
-			final Object value = deserializeProperty(objectParser, (MyrJsonbContext) context, property);
+			final Object value = ((MyrJsonbContext) context).deserializeProperty(objectParser, property);
 			values.put(name, value);
 		}
 
@@ -111,8 +99,8 @@ public class DefaultDeserializer implements JsonbDeserializer<Object> {
 			creator.setAccessible(true);
 			try {
 				object = switch (creator) {
-					case Method method -> method.invoke(null, creatorArguments);
-					case Constructor<?> constructor -> constructor.newInstance(creatorArguments);
+				case Method method -> method.invoke(null, creatorArguments);
+				case Constructor<?> constructor -> constructor.newInstance(creatorArguments);
 				};
 			} finally {
 				creator.setAccessible(false);
@@ -130,15 +118,6 @@ public class DefaultDeserializer implements JsonbDeserializer<Object> {
 		} catch (final ReflectiveOperationException ex) {
 			throw new JsonbException("Reflective operation error", ex);
 		}
-	}
-
-	private Object deserializeProperty(final JsonParser parser, final MyrJsonbContext context, final Property property) {
-		final PropertyDeserializer<?> deserializer = propertyDeserializers.get(ReflectionUtilities.getRawType(property.type()));
-		if (deserializer != null) {
-			parser.next();
-			return deserializer.deserializeProperty(parser, context, property);
-		} else
-			return context.deserialize(property.type(), parser);
 	}
 
 	private Type findConcreteType(final JsonObject object, final Class<?> clazz, final Type type) {

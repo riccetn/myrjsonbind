@@ -48,6 +48,7 @@ import jakarta.json.bind.Jsonb;
 import jakarta.json.bind.JsonbConfig;
 import jakarta.json.bind.JsonbException;
 import jakarta.json.bind.adapter.JsonbAdapter;
+import jakarta.json.bind.annotation.JsonbNillable;
 import jakarta.json.bind.serializer.DeserializationContext;
 import jakarta.json.bind.serializer.JsonbDeserializer;
 import jakarta.json.bind.serializer.JsonbSerializer;
@@ -56,6 +57,10 @@ import jakarta.json.spi.JsonProvider;
 import jakarta.json.stream.JsonGenerator;
 import jakarta.json.stream.JsonParser;
 import jakarta.json.stream.JsonParser.Event;
+import se.narstrom.myr.json.bind.property.Property;
+import se.narstrom.myr.json.bind.property.PropertyDeserializer;
+import se.narstrom.myr.json.bind.property.PropertySerializer;
+import se.narstrom.myr.json.bind.property.ReadableProperty;
 import se.narstrom.myr.json.bind.reflect.ReflectionUtilities;
 import se.narstrom.myr.json.bind.serializer.AdapterSerializer;
 import se.narstrom.myr.json.bind.serializer.ArraySerializer;
@@ -380,7 +385,15 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 		try (final JsonGenerator generator = jsonp.createGenerator(writer)) {
 			serialize(object, object.getClass(), generator);
 		}
+	}
 
+	public Object deserializeProperty(final JsonParser parser, final Property property) {
+		final JsonbDeserializer<?> deserializer = findDeserializer(property.type());
+		if (deserializer instanceof PropertyDeserializer propertyDeserializer) {
+			parser.next();
+			return propertyDeserializer.deserializeProperty(parser, this, property);
+		} else
+			return deserialize(property.type(), parser);
 	}
 
 	@Override
@@ -402,11 +415,35 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 			actualType = type;
 		}
 
-		final JsonbDeserializer<?> deserializer = findDeserializer(actualType, parser);
+		final JsonbDeserializer<?> deserializer = findDeserializer(actualType);
 
 		LOG.fine(() -> String.format("Deserializing %s with %s", actualType, deserializer.getClass().getName()));
 
 		return (T) deserializer.deserialize(parser, this, actualType);
+	}
+
+	public void serializeProperty(final Object bean, final ReadableProperty property, final JsonGenerator generator) {
+		final Object value = property.getValue(bean);
+
+		final JsonbNillable jsonbNillable = property.getAnnotation(JsonbNillable.class);
+		final boolean nillable = (jsonbNillable != null) ? jsonbNillable.value() : getWriteNulls();
+
+		if (!nillable && isNullOrEmptyOptional(value))
+			return;
+
+		if (value == null) {
+			serialize(property.name(), (Object) null, generator);
+			return;
+		}
+
+		final JsonbSerializer<?> serializer = findSerializer(value.getClass());
+
+		generator.writeKey(property.name());
+		if (serializer instanceof PropertySerializer<?> propertySerializer) {
+			((PropertySerializer<Object>) propertySerializer).serializeProperty(value, generator, this, property);
+		} else {
+			((JsonbSerializer<Object>) serializer).serialize(value, generator, this);
+		}
 	}
 
 	@Override
@@ -426,6 +463,14 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 		} else {
 			serialize(object, object.getClass(), generator);
 		}
+	}
+
+	private boolean getWriteNulls() {
+		return config.getProperty(JsonbConfig.NULL_VALUES).map(Boolean.class::cast).orElse(Boolean.FALSE);
+	}
+
+	private boolean isNullOrEmptyOptional(final Object value) {
+		return value == null || (value instanceof Optional opt && opt.isEmpty()) || (value instanceof OptionalDouble opt && opt.isEmpty()) || (value instanceof OptionalInt opt && opt.isEmpty()) || (value instanceof OptionalLong opt && opt.isEmpty());
 	}
 
 	private void installAdapters(final JsonbAdapter<?, ?>[] adapters) {
@@ -449,7 +494,7 @@ public final class MyrJsonbContext implements Jsonb, SerializationContext, Deser
 		((JsonbSerializer<T>) serializer).serialize(object, generator, this);
 	}
 
-	private JsonbDeserializer<?> findDeserializer(final Type type, final JsonParser parser) {
+	private JsonbDeserializer<?> findDeserializer(final Type type) {
 		Class<?> clazz = ReflectionUtilities.getRawType(type);
 
 		{

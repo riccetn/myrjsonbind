@@ -1,22 +1,12 @@
 package se.narstrom.myr.json.bind.serializer.defaults;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.OptionalDouble;
-import java.util.OptionalInt;
-import java.util.OptionalLong;
 import java.util.SequencedMap;
 import java.util.Set;
 
-import jakarta.json.bind.JsonbConfig;
 import jakarta.json.bind.JsonbException;
-import jakarta.json.bind.annotation.JsonbNillable;
 import jakarta.json.bind.annotation.JsonbSubtype;
 import jakarta.json.bind.annotation.JsonbTypeInfo;
 import jakarta.json.bind.serializer.JsonbSerializer;
@@ -24,20 +14,9 @@ import jakarta.json.bind.serializer.SerializationContext;
 import jakarta.json.stream.JsonGenerator;
 import se.narstrom.myr.json.bind.MyrJsonbContext;
 import se.narstrom.myr.json.bind.property.Properties;
-import se.narstrom.myr.json.bind.property.PropertySerializer;
 import se.narstrom.myr.json.bind.property.ReadableProperty;
-import se.narstrom.myr.json.bind.reflect.ReflectionUtilities;
-import se.narstrom.myr.json.bind.serializer.basic.DoubleSerializer;
-import se.narstrom.myr.json.bind.serializer.time.DateSerializer;
-import se.narstrom.myr.json.bind.serializer.time.JavaTimeSerializer;
 
 public final class DefaultSerializer implements JsonbSerializer<Object> {
-	private final Map<Class<?>, PropertySerializer<?>> propertySerializers = Map.ofEntries(
-			Map.entry(Double.TYPE, new DoubleSerializer()),
-			Map.entry(Double.class, new DoubleSerializer()),
-			Map.entry(Date.class, new DateSerializer()),
-			Map.entry(LocalDateTime.class, new JavaTimeSerializer<>(DateTimeFormatter.ISO_DATE_TIME, LocalDateTime::from))
-	);
 
 	@Override
 	public void serialize(final Object object, final JsonGenerator generator, final SerializationContext context) {
@@ -84,25 +63,8 @@ public final class DefaultSerializer implements JsonbSerializer<Object> {
 				throw new JsonbException("Name conflict");
 		}
 
-		final boolean writeNulls = getWriteNulls(context);
-
 		for (final ReadableProperty property : properties.values()) {
-			final Object value = property.getValue(object);
-
-			final JsonbNillable jsonbNillable = property.getAnnotation(JsonbNillable.class);
-			final boolean nillable = (jsonbNillable != null) ? jsonbNillable.value() : writeNulls;
-
-			if (!nillable && isNullOrEmptyOptional(value))
-				continue;
-
-			final PropertySerializer<?> propertySerializer = propertySerializers.get(ReflectionUtilities.getRawType(property.type()));
-			if(propertySerializer != null) {
-				generator.writeKey(property.name());
-				((PropertySerializer<Object>) propertySerializer).serializeProperty(value, generator, (MyrJsonbContext) context, property);
-			} else {
-
-				context.serialize(property.name(), value, generator);
-			}
+			((MyrJsonbContext) context).serializeProperty(object, property, generator);
 		}
 	}
 
@@ -137,14 +99,5 @@ public final class DefaultSerializer implements JsonbSerializer<Object> {
 		}
 
 		return typeInfos;
-	}
-
-	private boolean getWriteNulls(final SerializationContext context) {
-		return ((MyrJsonbContext) context).getConfig().getProperty(JsonbConfig.NULL_VALUES).map(Boolean.class::cast).orElse(Boolean.FALSE);
-	}
-
-	private boolean isNullOrEmptyOptional(final Object value) {
-		return value == null || (value instanceof Optional opt && opt.isEmpty()) || (value instanceof OptionalDouble opt && opt.isEmpty()) || (value instanceof OptionalInt opt && opt.isEmpty())
-				|| (value instanceof OptionalLong opt && opt.isEmpty());
 	}
 }
