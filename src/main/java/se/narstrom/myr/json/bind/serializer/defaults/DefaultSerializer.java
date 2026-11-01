@@ -56,7 +56,7 @@ public final class DefaultSerializer implements JsonbSerializer<Object> {
 	}
 
 	private void serializeProperties(final Object object, final Class<?> clazz, final JsonGenerator generator, final SerializationContext context, final Set<String> blacklist) {
-		final SequencedMap<String, ReadableProperty> properties = Properties.getProperties(clazz);
+		final SequencedMap<String, ReadableProperty> properties = Properties.getProperties(clazz, (MyrJsonbContext) context);
 
 		for (final String properyName : properties.keySet()) {
 			if (blacklist.contains(properyName))

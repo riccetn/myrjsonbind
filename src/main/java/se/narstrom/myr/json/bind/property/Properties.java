@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -17,8 +18,12 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import jakarta.json.bind.JsonbConfig;
 import jakarta.json.bind.JsonbException;
 import jakarta.json.bind.annotation.JsonbProperty;
+import jakarta.json.bind.annotation.JsonbPropertyOrder;
+import jakarta.json.bind.config.PropertyOrderStrategy;
+import se.narstrom.myr.json.bind.MyrJsonbContext;
 import se.narstrom.myr.json.bind.reflect.ReflectionUtilities;
 
 public final class Properties {
@@ -98,7 +103,7 @@ public final class Properties {
 			throw new AssertionError("Unreachable");
 	}
 
-	public static SequencedMap<String, ReadableProperty> getProperties(final Type beanType) {
+	public static SequencedMap<String, ReadableProperty> getProperties(final Type beanType, final MyrJsonbContext context) {
 		final Class<?> rawType = ReflectionUtilities.getRawType(beanType);
 
 		if (rawType.isAnnotation() || rawType.isArray() || rawType.isEnum() || rawType.isInterface() || rawType.isPrimitive() || rawType.isSynthetic())
@@ -107,12 +112,12 @@ public final class Properties {
 		if (rawType == Object.class)
 			return new LinkedHashMap<>();
 
-		final SequencedMap<String, ReadableProperty> superProperties = getProperties(ReflectionUtilities.getSuperType(beanType));
+		final SequencedMap<String, ReadableProperty> superProperties = getProperties(ReflectionUtilities.getSuperType(beanType), context);
 
 		final Set<String> blacklist = new HashSet<>();
 		blacklist.addAll(superProperties.keySet());
 
-		final SortedMap<String, ReadableProperty> localProperties = new TreeMap<>();
+		final SortedMap<String, ReadableProperty> localProperties = new TreeMap<>(getPropertyNameComparator(rawType, context));
 
 		final Map<String, Field> fields = listFields(rawType);
 		final Map<String, Method> getters = listGetters(rawType);
@@ -176,5 +181,50 @@ public final class Properties {
 		properties.putAll(localProperties);
 
 		return properties;
+	}
+
+	private static Comparator<String> getPropertyNameComparator(final Class<?> beanClass, final MyrJsonbContext context) {
+		final JsonbPropertyOrder annotation = beanClass.getAnnotation(JsonbPropertyOrder.class);
+
+		if (annotation != null)
+			return new PropertyNameComparator(annotation.value());
+		else {
+			final String strategy = getPropertyOrderStrategy(context);
+			return switch (strategy) {
+				case PropertyOrderStrategy.ANY, PropertyOrderStrategy.LEXICOGRAPHICAL -> Comparator.naturalOrder();
+				case PropertyOrderStrategy.REVERSE -> Comparator.<String>naturalOrder().reversed();
+				default -> throw new JsonbException("Unsupported property order strategy " + strategy);
+			};
+		}
+	}
+
+	private static String getPropertyOrderStrategy(final MyrJsonbContext context) {
+		return (String) context.getConfig().getProperty(JsonbConfig.PROPERTY_ORDER_STRATEGY).orElse(PropertyOrderStrategy.LEXICOGRAPHICAL);
+	}
+
+	private static class PropertyNameComparator implements Comparator<String> {
+		private final Map<String, Integer> order;
+
+		PropertyNameComparator(final String[] names) {
+			final Map.Entry<String, Integer>[] entries = new Map.Entry[names.length];
+			for (int i = 0; i < names.length; ++i) {
+				entries[i] = Map.entry(names[i], i);
+			}
+			this.order = Map.ofEntries(entries);
+		}
+
+		@Override
+		public int compare(final String name1, final String name2) {
+			final Integer pos1 = order.get(name1);
+			final Integer pos2 = order.get(name2);
+			if (pos1 != null && pos2 != null)
+				return Integer.compare(pos1, pos2);
+			else if(pos1 != null)
+				return -1;
+			else if(pos2 != null)
+				return 01;
+			else
+				return name1.compareTo(name2);
+		}
 	}
 }
